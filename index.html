@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>cast-shadow — demo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%226%22 r=%223%22 fill=%22%23e8b53a%22/%3E%3Cellipse cx=%229%22 cy=%2213%22 rx=%224%22 ry=%221.6%22 fill=%22%23000%22 opacity=%22.3%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="cast-shadow.css">
+<style>
+  :root {
+    /* The light lives here. Everything else follows from it. */
+    --cast-light-x: 50%;
+    --cast-light-y: 0%;
+
+    --ink: #16181d;
+    --muted: #6b7280;
+    --page: #eceae5;
+    --surface: #fbfaf8;
+    --line: #dcd8d0;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--page);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding-inline: 20px;
+  }
+
+  /* ---- Fixed header: proves fixed elements hold still ---- */
+
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 14px 20px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    background: rgb(251 250 248 / 0.88);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  /* Needs a surface of its own, or the shadow floats behind bare text. */
+  header strong {
+    display: inline-block;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 11px;
+    --cast-length: 16px;
+  }
+  header span { font-size: 13px; color: var(--muted); }
+
+  main { padding-top: 120px; padding-bottom: 140px; }
+
+  h1 {
+    font-size: clamp(30px, 6vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin: 0 0 16px;
+    max-width: 16ch;
+  }
+
+  .lede {
+    font-size: clamp(17px, 2.4vw, 20px);
+    color: var(--muted);
+    max-width: 58ch;
+    margin: 0 0 12px;
+  }
+
+  h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 72px 0 20px;
+    font-weight: 600;
+  }
+
+  /* ---- Things that cast shadows ---- */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: 34px;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 22px;
+    min-height: 140px;
+    border: 1px solid var(--line);
+  }
+
+  .card h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -0.01em; }
+  .card p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  .row {
+    display: flex;
+    gap: 44px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  .chip {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+
+  .chip.pill { width: 190px; border-radius: 999px; }
+  .chip.block { border-radius: 6px; }
+
+  /* Shape mode needs a bigger throw to read clearly at this size. */
+  .mark { --cast-length: 34px; display: block; }
+
+  .compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 44px;
+    align-items: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .compare figcaption {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 22px;
+  }
+
+  .compare code {
+    font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #e2dfd8;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ---- The light itself ---- */
+
+  /* A second look, defined only by overriding custom properties.
+     No JavaScript knows this section exists. */
+  .warm {
+    --cast-length: 48px;
+    --cast-blur-near: 2px;
+    --cast-blur-far: 40px;
+    --cast-alpha-near: 0.42;
+    --cast-alpha-far: 0.1;
+    --cast-color: 92 46 12;
+  }
+
+  .light {
+    position: fixed;
+    left: var(--cast-light-x);
+    top: var(--cast-light-y);
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border-radius: 50%;
+    background: #fff3cd;
+    box-shadow:
+      0 0 0 1px rgb(180 150 60 / 0.5),
+      0 0 24px 8px rgb(255 214 110 / 0.75),
+      0 0 70px 30px rgb(255 214 110 / 0.35);
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  .hint {
+    position: fixed;
+    left: 50%;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 20;
+    background: rgb(22 24 29 / 0.88);
+    color: #f6f5f2;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 80px;
+    padding: 28px 0 40px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <strong data-cast>cast-shadow</strong>
+  <span>This bar is <code>position: fixed</code>, so its shadow never swings.</span>
+</header>
+
+<main class="wrap">
+  <h1>Shadows that know where the light is.</h1>
+  <p class="lede">
+    The light is pinned to the viewport. Scroll, and everything on the page
+    swings its shadow away from it — longer, softer and fainter the further
+    it travels.
+  </p>
+  <p class="lede"><strong>Click anywhere to move the light.</strong></p>
+
+  <h2>Cards</h2>
+  <div class="grid">
+    <div class="card" data-cast><h3>Near the light</h3><p>Tight, dark, barely offset.</p></div>
+    <div class="card" data-cast><h3>Mid distance</h3><p>The shadow starts to lean.</p></div>
+    <div class="card" data-cast><h3>Far corner</h3><p>Long, diffuse, faded out.</p></div>
+    <div class="card" data-cast><h3>Falloff</h3><p>Length, blur and opacity move together.</p></div>
+    <div class="card" data-cast><h3>Direction</h3><p>Always directly away from the source.</p></div>
+    <div class="card" data-cast><h3>Culling</h3><p>Offscreen elements cost nothing.</p></div>
+  </div>
+
+  <h2>Shapes</h2>
+  <div class="row">
+    <div class="chip" data-cast></div>
+    <div class="chip pill" data-cast></div>
+    <div class="chip block" data-cast></div>
+  </div>
+
+  <h2>Box mode versus shape mode</h2>
+  <div class="compare">
+    <figure style="margin:0">
+      <svg class="mark" data-cast width="150" height="150" viewBox="0 0 100 100" aria-label="Star, box mode">
+        <path d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z" fill="#fbfaf8" stroke="#dcd8d0"/>
+      </svg>
+      <figcaption>Default. The shadow follows the <code>150&times;150</code> box.</figcaption>
+    </figure>
+    <figure style="margin:0">
+      <svg class="mark" data-cast="shape" width="150" height="150" viewBox="0 0 100 100" aria-label="Star, shape mode">
+        <path d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z" fill="#fbfaf8" stroke="#dcd8d0"/>
+      </svg>
+      <figcaption><code>data-cast="shape"</code>. The shadow follows the star.</figcaption>
+    </figure>
+  </div>
+
+  <h2>Keep scrolling</h2>
+  <div class="grid">
+    <div class="card" data-cast><h3>Row two</h3><p>Watch the angle flip as you pass the light.</p></div>
+    <div class="card" data-cast><h3>Row two</h3><p>Shadows point down, then up.</p></div>
+    <div class="card" data-cast><h3>Row two</h3><p>Nothing is hard-coded per element.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>All of it is CSS you can override.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>Try editing <code>--cast-length</code>.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>Or the ease curve.</p></div>
+    <div class="card" data-cast><h3>Row four</h3><p>Two scroll reads per frame, total.</p></div>
+    <div class="card" data-cast><h3>Row four</h3><p>No layout thrash.</p></div>
+    <div class="card" data-cast><h3>Row four</h3><p>No dependencies.</p></div>
+  </div>
+
+  <h2>Retuned in CSS alone</h2>
+  <div class="row">
+    <div class="chip warm" data-cast></div>
+    <div class="chip pill warm" data-cast></div>
+    <div class="chip block warm" data-cast></div>
+  </div>
+
+  <footer class="wrap" style="padding-inline:0">
+    Warm tint, longer throw, softer edge. That row overrides five custom
+    properties and nothing else. The JavaScript is unaware it happened.
+  </footer>
+</main>
+
+<div class="light" aria-hidden="true"></div>
+<p class="hint">Click anywhere to move the light</p>
+
+<script type="module">
+  import { castShadow } from './cast-shadow.js';
+
+  const shadows = castShadow();
+  const root = document.documentElement;
+
+  document.addEventListener('click', (event) => {
+    const x = `${(event.clientX / window.innerWidth) * 100}%`;
+    const y = `${(event.clientY / window.innerHeight) * 100}%`;
+
+    // Keep the marker and the maths reading from the same source.
+    root.style.setProperty('--cast-light-x', x);
+    root.style.setProperty('--cast-light-y', y);
+    shadows.refresh();
+  });
+</script>
+
+</body>
+</html>

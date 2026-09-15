@@ -1,0 +1,125 @@
+/*
+ * cast-shadow.css
+ *
+ * All visual tuning lives here. The JavaScript writes exactly three
+ * unitless numbers per element and never makes a styling decision:
+ *
+ *   --cast-ux   horizontal direction away from the light  (-1 to 1)
+ *   --cast-uy   vertical direction away from the light    (-1 to 1)
+ *   --cast-t    normalised distance from the light        ( 0 to 1)
+ *
+ * Everything below is yours to override, per element, per breakpoint,
+ * per colour scheme. Override in your own stylesheet rather than
+ * editing this file, so updates stay painless.
+ */
+
+/* Registering the properties as <number> lets them interpolate smoothly
+   instead of snapping, and gives sane values before the script runs. */
+@property --cast-ux {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --cast-uy {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --cast-t {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0.35;
+}
+
+/* Where the light sits in the viewport. Percentages are measured against
+   the viewport; px, vw and vh also work. The script reads these on load
+   and on resize, so most projects never need to touch the JS API. */
+:root {
+  --cast-light-x: 50%;
+  --cast-light-y: 0%;
+
+  /* Optional. Distance at which --cast-t reaches 1.
+     Leave unset and the script uses the viewport diagonal. */
+  /* --cast-max-distance: 1200px; */
+}
+
+[data-cast] {
+  /* ---- Tuning knobs ---------------------------------------------- */
+
+  /* How far the shadow travels at maximum distance. */
+  --cast-length: 28px;
+
+  /* Blur at the light, and blur at maximum distance.
+     Close objects are crisp, far ones are diffuse. */
+  --cast-blur-near: 3px;
+  --cast-blur-far: 26px;
+
+  /* Opacity runs the other way: shadows fade as they lengthen.
+     Without this, distant shadows read as tar. */
+  --cast-alpha-near: 0.34;
+  --cast-alpha-far: 0.12;
+
+  /* Shadow colour as space-separated RGB channels.
+     A slightly blue-black reads more natural than pure black. */
+  --cast-color: 12 14 24;
+
+  /* ---- Derived values -------------------------------------------- */
+
+  /* Quadratic ease-out. Linear growth looks mechanical and runs too
+     long at the edges of the screen. Swap for var(--cast-t) if you
+     want it linear, or calc(var(--cast-t) * var(--cast-t)) to ease in. */
+  --cast-ease: calc(var(--cast-t) * (2 - var(--cast-t)));
+
+  --cast-x: calc(var(--cast-ux) * var(--cast-ease) * var(--cast-length));
+  --cast-y: calc(var(--cast-uy) * var(--cast-ease) * var(--cast-length));
+
+  --cast-blur: calc(
+    var(--cast-blur-near) + var(--cast-t) * (var(--cast-blur-far) - var(--cast-blur-near))
+  );
+
+  --cast-alpha: calc(
+    var(--cast-alpha-near) + var(--cast-t) * (var(--cast-alpha-far) - var(--cast-alpha-near))
+  );
+
+  /* ---- Output ----------------------------------------------------- */
+
+  box-shadow:
+    var(--cast-x) var(--cast-y) var(--cast-blur)
+    rgb(var(--cast-color) / var(--cast-alpha));
+}
+
+/*
+ * Shape mode. Traces the element's actual alpha silhouette, so a cutout
+ * logo casts a logo-shaped shadow instead of a rectangle.
+ *
+ * Use it deliberately. `filter` creates a stacking context and a
+ * containing block, which means any position: fixed descendant will
+ * anchor to this element instead of the viewport. It also costs more
+ * to paint, and has no spread parameter.
+ */
+[data-cast="shape"] {
+  /* drop-shadow reads noticeably softer than box-shadow at the same
+     value, so it gets its own scale. */
+  --cast-blur-shape: calc(var(--cast-blur) / 2);
+
+  box-shadow: none;
+  filter: drop-shadow(
+    var(--cast-x) var(--cast-y) var(--cast-blur-shape)
+    rgb(var(--cast-color) / var(--cast-alpha))
+  );
+}
+
+/*
+ * No script, or reduced motion: everything above still works. You get a
+ * static shadow pointing straight down at a middling distance, which is
+ * just a normal, tasteful shadow. The script only makes it directional.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-cast] {
+    --cast-ux: 0;
+    --cast-uy: 1;
+    --cast-t: 0.35;
+  }
+}
