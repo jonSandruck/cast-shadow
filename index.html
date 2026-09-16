@@ -3,99 +3,177 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>cast-shadow — demo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%226%22 r=%223%22 fill=%22%23e8b53a%22/%3E%3Cellipse cx=%229%22 cy=%2213%22 rx=%224%22 ry=%221.6%22 fill=%22%23000%22 opacity=%22.3%22/%3E%3C/svg%3E">
+<title>Cast Shadow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='6' r='3' fill='%23e8b53a'/%3E%3Cellipse cx='9' cy='13' rx='4' ry='1.6' fill='%23000' opacity='.3'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="cast-shadow.css">
 <style>
-  :root {
-    /* The light lives here. Everything else follows from it. */
-    --cast-light-x: 50%;
-    --cast-light-y: 0%;
+  /* ---- Palette -------------------------------------------------------
+     Light is paper under a lamp. Dark is the same room with the lamp on
+     and the lights off, so the shadow tokens are retuned rather than
+     inverted: black on a dark ground disappears. */
 
-    --ink: #16181d;
-    --muted: #6b7280;
-    --page: #eceae5;
-    --surface: #fbfaf8;
-    --line: #dcd8d0;
-    color-scheme: light;
+  :root {
+    --ground: #efede7;
+    --surface: #fcfbf9;
+    --ink: #15171c;
+    --muted: #6a6f79;
+    --line: #dbd6cc;
+    --code-bg: #e3dfd6;
+    --lamp: #e8b53a;
+    --lamp-glow: 255 214 110;
+
+    --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #121419;
+      --surface: #1c1f26;
+      --ink: #e6e4df;
+      --muted: #8b909b;
+      --line: #2a2e37;
+      --code-bg: #262a33;
+      --lamp: #f0c24e;
+      --lamp-glow: 240 194 78;
+    }
+
+    /* Retuned in CSS alone — the script has no idea the theme changed. */
+    :root:not([data-theme="light"]) [data-cast] {
+      --cast-color: 0 0 0;
+      --cast-alpha-near: 0.62;
+      --cast-alpha-far: 0.26;
+      --cast-sheen: 0.07;
+      --cast-grain: 0.05;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #121419;
+    --surface: #1c1f26;
+    --ink: #e6e4df;
+    --muted: #8b909b;
+    --line: #2a2e37;
+    --code-bg: #262a33;
+    --lamp: #f0c24e;
+    --lamp-glow: 240 194 78;
+  }
+
+  :root[data-theme="dark"] [data-cast] {
+    --cast-color: 0 0 0;
+    --cast-alpha-near: 0.62;
+    --cast-alpha-far: 0.26;
+    --cast-sheen: 0.07;
+    --cast-grain: 0.05;
+  }
+
+  /* ---- Base ---------------------------------------------------------- */
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    padding: 0;
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--ground);
     color: var(--ink);
-    background: var(--page);
+    font-family: var(--ui);
+    font-size: 16px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap {
-    max-width: 1040px;
-    margin: 0 auto;
-    padding-inline: 20px;
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
   }
 
-  /* ---- Fixed header: proves fixed elements hold still ---- */
+  .wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; }
 
-  header {
+  /* ---- Fixed bar: proves fixed elements hold still ------------------- */
+
+  .bar {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     z-index: 10;
-    padding: 14px 20px;
-    padding-top: calc(14px + env(safe-area-inset-top, 0px));
-    background: rgb(251 250 248 / 0.88);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line);
     display: flex;
-    gap: 16px;
-    align-items: baseline;
+    align-items: center;
+    gap: 14px;
     flex-wrap: wrap;
+    padding: 12px 20px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    background: color-mix(in srgb, var(--ground) 86%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
   }
 
   /* Needs a surface of its own, or the shadow floats behind bare text. */
-  header strong {
+  .bar strong {
     display: inline-block;
     font-size: 14px;
+    font-weight: 600;
     letter-spacing: -0.01em;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 5px 11px;
-    --cast-length: 16px;
+    --cast-elevation: 8;
   }
-  header span { font-size: 13px; color: var(--muted); }
 
-  main { padding-top: 120px; padding-bottom: 140px; }
+  .bar span { font-size: 13px; color: var(--muted); }
+
+  .theme-toggle {
+    margin-left: auto;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+
+  .theme-toggle:hover { border-color: var(--muted); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+
+  main { padding-top: 116px; padding-bottom: 120px; }
+
+  /* ---- Type ---------------------------------------------------------- */
 
   h1 {
+    font-weight: 700;
     font-size: clamp(30px, 6vw, 52px);
     line-height: 1.08;
     letter-spacing: -0.03em;
-    margin: 0 0 16px;
+    text-wrap: balance;
+    margin: 0 0 18px;
     max-width: 16ch;
   }
 
   .lede {
-    font-size: clamp(17px, 2.4vw, 20px);
+    font-size: clamp(17px, 2.2vw, 19px);
     color: var(--muted);
-    max-width: 58ch;
-    margin: 0 0 12px;
+    max-width: 60ch;
+    margin: 0 0 14px;
   }
 
-  h2 {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin: 72px 0 20px;
+  .eyebrow {
+    font-size: 12px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 76px 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
   }
 
-  /* ---- Things that cast shadows ---- */
+  .note { font-size: 14px; color: var(--muted); max-width: 62ch; margin: 0 0 26px; }
+
+  /* ---- Things that cast shadows -------------------------------------- */
 
   .grid {
     display: grid;
@@ -105,13 +183,13 @@
 
   .card {
     background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 14px;
     padding: 22px;
-    min-height: 140px;
-    border: 1px solid var(--line);
+    min-height: 138px;
   }
 
-  .card h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -0.01em; }
+  .card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
   .card p { margin: 0; font-size: 14px; color: var(--muted); }
 
   .row {
@@ -120,12 +198,24 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    padding: 20px 0;
+    padding: 22px 0 10px;
+  }
+
+  .tile {
+    width: 128px;
+    height: 128px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
   }
 
   .chip {
-    width: 96px;
-    height: 96px;
+    width: 96px; height: 96px;
     border-radius: 50%;
     background: var(--surface);
     border: 1px solid var(--line);
@@ -134,57 +224,34 @@
   .chip.pill { width: 190px; border-radius: 999px; }
   .chip.block { border-radius: 6px; }
 
-  /* Shape mode needs a bigger throw to read clearly at this size. */
-  .mark { --cast-length: 34px; display: block; }
-
-  .compare {
+  .pair {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
     gap: 44px;
-    align-items: center;
     justify-items: center;
     text-align: center;
   }
 
-  .compare figcaption {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 22px;
-  }
+  .pair figure { margin: 0; }
+  .pair figcaption { font-size: 13px; color: var(--muted); margin-top: 22px; }
 
-  .compare code {
-    font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-    background: #e2dfd8;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
+  /* Shape mode needs a bigger throw to read clearly at this size. */
+  .mark { display: block; max-width: 100%; --cast-elevation: 34; }
+  .mark .face { fill: var(--surface); stroke: var(--line); }
 
-  /* ---- The light itself ---- */
+  /* ---- The light itself ---------------------------------------------- */
 
-  /* A second look, defined only by overriding custom properties.
-     No JavaScript knows this section exists. */
-  .warm {
-    --cast-length: 48px;
-    --cast-blur-near: 2px;
-    --cast-blur-far: 40px;
-    --cast-alpha-near: 0.42;
-    --cast-alpha-far: 0.1;
-    --cast-color: 92 46 12;
-  }
-
-  .light {
+  .lamp {
     position: fixed;
     left: var(--cast-light-x);
     top: var(--cast-light-y);
-    width: 20px;
-    height: 20px;
+    width: 20px; height: 20px;
     margin: -10px 0 0 -10px;
     border-radius: 50%;
-    background: #fff3cd;
+    background: var(--lamp);
     box-shadow:
-      0 0 0 1px rgb(180 150 60 / 0.5),
-      0 0 24px 8px rgb(255 214 110 / 0.75),
-      0 0 70px 30px rgb(255 214 110 / 0.35);
+      0 0 26px 9px rgb(var(--lamp-glow) / 0.7),
+      0 0 76px 34px rgb(var(--lamp-glow) / 0.3);
     pointer-events: none;
     z-index: 20;
   }
@@ -195,10 +262,12 @@
     bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 20;
-    background: rgb(22 24 29 / 0.88);
-    color: #f6f5f2;
+    margin: 0;
+    background: var(--ink);
+    color: var(--ground);
     font-size: 13px;
-    padding: 9px 16px;
+    font-weight: 500;
+    padding: 9px 17px;
     border-radius: 999px;
     pointer-events: none;
     white-space: nowrap;
@@ -206,93 +275,132 @@
 
   footer {
     border-top: 1px solid var(--line);
-    margin-top: 80px;
-    padding: 28px 0 40px;
+    margin-top: 76px;
+    padding-top: 26px;
     font-size: 14px;
     color: var(--muted);
+    max-width: 62ch;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .hint { display: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
 </style>
 </head>
 <body>
 
-<header>
+<div class="bar">
   <strong data-cast>cast-shadow</strong>
   <span>This bar is <code>position: fixed</code>, so its shadow never swings.</span>
-</header>
+  <button class="theme-toggle" type="button" id="theme-toggle">Dark</button>
+</div>
 
 <main class="wrap">
   <h1>Shadows that know where the light is.</h1>
+
   <p class="lede">
-    The light is pinned to the viewport. Scroll, and everything on the page
-    swings its shadow away from it — longer, softer and fainter the further
-    it travels.
+    The light has a position in three dimensions. Objects sit at a height
+    above the page, and their shadows are projected from that geometry
+    rather than styled by hand.
   </p>
   <p class="lede"><strong>Click anywhere to move the light.</strong></p>
 
-  <h2>Cards</h2>
-  <div class="grid">
-    <div class="card" data-cast><h3>Near the light</h3><p>Tight, dark, barely offset.</p></div>
-    <div class="card" data-cast><h3>Mid distance</h3><p>The shadow starts to lean.</p></div>
-    <div class="card" data-cast><h3>Far corner</h3><p>Long, diffuse, faded out.</p></div>
-    <div class="card" data-cast><h3>Falloff</h3><p>Length, blur and opacity move together.</p></div>
-    <div class="card" data-cast><h3>Direction</h3><p>Always directly away from the source.</p></div>
-    <div class="card" data-cast><h3>Culling</h3><p>Offscreen elements cost nothing.</p></div>
+  <p class="eyebrow">Elevation</p>
+  <p class="note">
+    Four identical tiles at four heights. Nothing else differs. Offset and
+    blur both come from <code>height &divide; (lightHeight &minus; height)</code>,
+    so they stay in agreement without being tuned separately.
+  </p>
+  <div class="row">
+    <div class="tile" data-cast style="--cast-elevation: 4">4</div>
+    <div class="tile" data-cast style="--cast-elevation: 20">20</div>
+    <div class="tile" data-cast style="--cast-elevation: 48">48</div>
+    <div class="tile" data-cast style="--cast-elevation: 96">96</div>
   </div>
 
-  <h2>Shapes</h2>
+  <p class="eyebrow">Light size</p>
+  <p class="note">
+    One number, <code>--cast-light-size</code>, moves the whole scene from
+    hard midday sun to overcast. It is the penumbra width, so it changes
+    softness without touching position.
+  </p>
+  <div class="pair">
+    <figure style="--cast-light-size: 90">
+      <div class="row" style="padding: 0">
+        <div class="tile" data-cast style="--cast-elevation: 24"></div>
+        <div class="tile" data-cast style="--cast-elevation: 64"></div>
+      </div>
+      <figcaption><code>90</code> — a small, hard source.</figcaption>
+    </figure>
+    <figure style="--cast-light-size: 900">
+      <div class="row" style="padding: 0">
+        <div class="tile" data-cast style="--cast-elevation: 24"></div>
+        <div class="tile" data-cast style="--cast-elevation: 64"></div>
+      </div>
+      <figcaption><code>900</code> — a broad, overcast one.</figcaption>
+    </figure>
+  </div>
+
+  <p class="eyebrow">Surface lighting</p>
+  <p class="note">
+    <code>data-cast="surface"</code> lights the object's own face: a sheen
+    angled toward the light, and fine grain to stop the gradient banding.
+    The angle comes from CSS <code>atan2()</code>, so this needs no extra
+    JavaScript.
+  </p>
+  <div class="pair">
+    <figure>
+      <div class="tile" data-cast style="--cast-elevation: 40"></div>
+      <figcaption>Shadow only.</figcaption>
+    </figure>
+    <figure>
+      <div class="tile" data-cast="surface" style="--cast-elevation: 40"></div>
+      <figcaption>Shadow, sheen and grain.</figcaption>
+    </figure>
+  </div>
+
+  <p class="eyebrow">Shapes</p>
   <div class="row">
     <div class="chip" data-cast></div>
     <div class="chip pill" data-cast></div>
     <div class="chip block" data-cast></div>
   </div>
 
-  <h2>Box mode versus shape mode</h2>
-  <div class="compare">
-    <figure style="margin:0">
-      <svg class="mark" data-cast width="150" height="150" viewBox="0 0 100 100" aria-label="Star, box mode">
-        <path d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z" fill="#fbfaf8" stroke="#dcd8d0"/>
+  <p class="eyebrow">Box mode versus shape mode</p>
+  <div class="pair">
+    <figure>
+      <svg class="mark" data-cast width="150" height="150" viewBox="0 0 100 100" role="img" aria-label="Star in box mode">
+        <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
       </svg>
       <figcaption>Default. The shadow follows the <code>150&times;150</code> box.</figcaption>
     </figure>
-    <figure style="margin:0">
-      <svg class="mark" data-cast="shape" width="150" height="150" viewBox="0 0 100 100" aria-label="Star, shape mode">
-        <path d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z" fill="#fbfaf8" stroke="#dcd8d0"/>
+    <figure>
+      <svg class="mark" data-cast="shape" width="150" height="150" viewBox="0 0 100 100" role="img" aria-label="Star in shape mode">
+        <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
       </svg>
       <figcaption><code>data-cast="shape"</code>. The shadow follows the star.</figcaption>
     </figure>
   </div>
 
-  <h2>Keep scrolling</h2>
+  <p class="eyebrow">Keep scrolling</p>
   <div class="grid">
     <div class="card" data-cast><h3>Row two</h3><p>Watch the angle flip as you pass the light.</p></div>
     <div class="card" data-cast><h3>Row two</h3><p>Shadows point down, then up.</p></div>
     <div class="card" data-cast><h3>Row two</h3><p>Nothing is hard-coded per element.</p></div>
-    <div class="card" data-cast><h3>Row three</h3><p>All of it is CSS you can override.</p></div>
-    <div class="card" data-cast><h3>Row three</h3><p>Try editing <code>--cast-length</code>.</p></div>
-    <div class="card" data-cast><h3>Row three</h3><p>Or the ease curve.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>Same height, same blur, anywhere on screen.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>That consistency is what reads as one lit scene.</p></div>
+    <div class="card" data-cast><h3>Row three</h3><p>Only opacity still falls with distance.</p></div>
     <div class="card" data-cast><h3>Row four</h3><p>Two scroll reads per frame, total.</p></div>
     <div class="card" data-cast><h3>Row four</h3><p>No layout thrash.</p></div>
     <div class="card" data-cast><h3>Row four</h3><p>No dependencies.</p></div>
   </div>
 
-  <h2>Retuned in CSS alone</h2>
-  <div class="row">
-    <div class="chip warm" data-cast></div>
-    <div class="chip pill warm" data-cast></div>
-    <div class="chip block warm" data-cast></div>
-  </div>
-
-  <footer class="wrap" style="padding-inline:0">
-    Warm tint, longer throw, softer edge. That row overrides five custom
-    properties and nothing else. The JavaScript is unaware it happened.
+  <footer>
+    The script writes a direction and a distance. Every height, colour,
+    softness and sheen decision above is CSS, overridable per element and
+    per theme.
   </footer>
 </main>
 
-<div class="light" aria-hidden="true"></div>
+<div class="lamp" aria-hidden="true"></div>
 <p class="hint">Click anywhere to move the light</p>
 
 <script type="module">
@@ -302,13 +410,46 @@
   const root = document.documentElement;
 
   document.addEventListener('click', (event) => {
-    const x = `${(event.clientX / window.innerWidth) * 100}%`;
-    const y = `${(event.clientY / window.innerHeight) * 100}%`;
-
     // Keep the marker and the maths reading from the same source.
-    root.style.setProperty('--cast-light-x', x);
-    root.style.setProperty('--cast-light-y', y);
+    root.style.setProperty('--cast-light-x', `${(event.clientX / window.innerWidth) * 100}%`);
+    root.style.setProperty('--cast-light-y', `${(event.clientY / window.innerHeight) * 100}%`);
     shadows.refresh();
+  });
+
+  // ---- Theme toggle ----------------------------------------------------
+
+  const toggle = document.getElementById('theme-toggle');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function currentTheme() {
+    const stamped = root.getAttribute('data-theme');
+    if (stamped === 'dark' || stamped === 'light') return stamped;
+    return prefersDark.matches ? 'dark' : 'light';
+  }
+
+  function labelToggle() {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    toggle.textContent = next === 'dark' ? 'Dark' : 'Light';
+    toggle.setAttribute('aria-label', `Switch to ${next} theme`);
+  }
+
+  // Site data can be blocked or throw outright, so never let it break boot.
+  try {
+    const saved = localStorage.getItem('cast-shadow-theme');
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  } catch {}
+
+  labelToggle();
+  prefersDark.addEventListener('change', labelToggle);
+
+  toggle.addEventListener('click', (event) => {
+    // Otherwise this click also lands on the document and moves the light.
+    event.stopPropagation();
+
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('cast-shadow-theme', next); } catch {}
+    labelToggle();
   });
 </script>
 
