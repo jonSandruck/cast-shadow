@@ -1,20 +1,23 @@
 /*
  * cast-shadow.css
  *
- * All visual tuning lives here. The JavaScript writes exactly three
- * unitless numbers per element and never makes a styling decision:
+ * A light source with a position in three dimensions. Objects sit at a
+ * height above the page and their shadows are projected, not styled.
+ *
+ * The JavaScript writes three unitless numbers per element and makes no
+ * visual decision at all:
  *
  *   --cast-ux   horizontal direction away from the light  (-1 to 1)
  *   --cast-uy   vertical direction away from the light    (-1 to 1)
- *   --cast-t    normalised distance from the light        ( 0 to 1)
+ *   --cast-d    horizontal distance from the light, in px
  *
  * Everything below is yours to override, per element, per breakpoint,
- * per colour scheme. Override in your own stylesheet rather than
- * editing this file, so updates stay painless.
+ * per colour scheme. Override in your own stylesheet rather than editing
+ * this file, so updates stay painless.
  */
 
-/* Registering the properties as <number> lets them interpolate smoothly
-   instead of snapping, and gives sane values before the script runs. */
+/* Registering these as <number> lets them interpolate instead of snapping,
+   keeps calc() reliable, and gives sane values before the script runs. */
 @property --cast-ux {
   syntax: "<number>";
   inherits: false;
@@ -27,63 +30,105 @@
   initial-value: 1;
 }
 
-@property --cast-t {
+@property --cast-d {
   syntax: "<number>";
   inherits: false;
-  initial-value: 0.35;
+  initial-value: 420;
 }
 
-/* Where the light sits in the viewport. Percentages are measured against
-   the viewport; px, vw and vh also work. The script reads these on load
-   and on resize, so most projects never need to touch the JS API. */
+/* Written once to :root by the script. Inherits so every element can
+   normalise its own distance without another per-element write. */
+@property --cast-max-d {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1200;
+}
+
+@property --cast-light-z {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 600;
+}
+
+@property --cast-light-size {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 350;
+}
+
+/*
+ * The light.
+ *
+ * x and y place it in the viewport — percentages, px, vw and vh all work.
+ * z is its height above the page, in px, written unitless.
+ *
+ * size is the light's width, also unitless px. It is the single most
+ * useful dial here: small is a hard midday sun, large is an overcast sky.
+ * Soft interface shadows imply a very large source, which is why the
+ * default is bigger than it first looks.
+ */
 :root {
   --cast-light-x: 50%;
   --cast-light-y: 0%;
-
-  /* Optional. Distance at which --cast-t reaches 1.
-     Leave unset and the script uses the viewport diagonal. */
-  /* --cast-max-distance: 1200px; */
+  --cast-light-z: 600;
+  --cast-light-size: 350;
 }
 
 [data-cast] {
-  /* ---- Tuning knobs ---------------------------------------------- */
+  /* ---- How high this object floats, in px --------------------------- */
 
-  /* How far the shadow travels at maximum distance. */
-  --cast-length: 28px;
+  --cast-elevation: 20;
 
-  /* Blur at the light, and blur at maximum distance.
-     Close objects are crisp, far ones are diffuse. */
-  --cast-blur-near: 3px;
-  --cast-blur-far: 26px;
-
-  /* Opacity runs the other way: shadows fade as they lengthen.
-     Without this, distant shadows read as tar. */
-  --cast-alpha-near: 0.34;
-  --cast-alpha-far: 0.12;
+  /* ---- Colour and weight -------------------------------------------- */
 
   /* Shadow colour as space-separated RGB channels.
      A slightly blue-black reads more natural than pure black. */
   --cast-color: 12 14 24;
 
-  /* ---- Derived values -------------------------------------------- */
+  /* Opacity falls with distance. This is the one deliberately unphysical
+     knob: it stands in for ambient fill, and without it distant shadows
+     read as tar. */
+  --cast-alpha-near: 0.34;
+  --cast-alpha-far: 0.12;
 
-  /* Quadratic ease-out. Linear growth looks mechanical and runs too
-     long at the edges of the screen. Swap for var(--cast-t) if you
-     want it linear, or calc(var(--cast-t) * var(--cast-t)) to ease in. */
-  --cast-ease: calc(var(--cast-t) * (2 - var(--cast-t)));
+  /* Safety clamp, in px. As an object's height approaches the light's,
+     the projection runs to infinity — correct, but not useful. */
+  --cast-throw-max: 90;
 
-  --cast-x: calc(var(--cast-ux) * var(--cast-ease) * var(--cast-length));
-  --cast-y: calc(var(--cast-uy) * var(--cast-ease) * var(--cast-length));
+  /* ---- Projection ---------------------------------------------------
+   *
+   * Similar triangles. For a light at height H and an object at height h,
+   * a horizontal distance d from the light:
+   *
+   *     offset = d * h / (H - h)
+   *
+   * h = 0 gives no offset at all, and an object directly beneath the
+   * light gets no offset at any height. Both fall out for free.
+   *
+   * The same h / (H - h) factor is the penumbra ratio, so blur comes from
+   * one multiply rather than a hand-tuned curve. Objects at equal height
+   * share a blur no matter where they sit, which is both correct and
+   * what makes a layout read as one lit scene.
+   */
 
-  --cast-blur: calc(
-    var(--cast-blur-near) + var(--cast-t) * (var(--cast-blur-far) - var(--cast-blur-near))
+  --cast-k: calc(
+    var(--cast-elevation) / max(var(--cast-light-z) - var(--cast-elevation), 1)
   );
+
+  --cast-throw: min(calc(var(--cast-d) * var(--cast-k)), var(--cast-throw-max));
+
+  --cast-x: calc(var(--cast-ux) * var(--cast-throw) * 1px);
+  --cast-y: calc(var(--cast-uy) * var(--cast-throw) * 1px);
+  --cast-blur: calc(var(--cast-light-size) * var(--cast-k) * 1px);
+
+  /* Normalised distance, for anything that should fade with range. */
+  --cast-t: min(calc(var(--cast-d) / var(--cast-max-d)), 1);
 
   --cast-alpha: calc(
     var(--cast-alpha-near) + var(--cast-t) * (var(--cast-alpha-far) - var(--cast-alpha-near))
   );
 
-  /* ---- Output ----------------------------------------------------- */
+  /* ---- Output -------------------------------------------------------- */
 
   box-shadow:
     var(--cast-x) var(--cast-y) var(--cast-blur)
@@ -91,17 +136,16 @@
 }
 
 /*
- * Shape mode. Traces the element's actual alpha silhouette, so a cutout
- * logo casts a logo-shaped shadow instead of a rectangle.
+ * Shape mode. Traces the element's alpha silhouette, so a cutout logo
+ * casts a logo-shaped shadow instead of a rectangle.
  *
- * Use it deliberately. `filter` creates a stacking context and a
- * containing block, which means any position: fixed descendant will
- * anchor to this element instead of the viewport. It also costs more
- * to paint, and has no spread parameter.
+ * Use it deliberately. `filter` creates a stacking context AND a
+ * containing block, so any position: fixed descendant will anchor to this
+ * element instead of the viewport. It also costs more to paint, and has
+ * no spread parameter.
  */
-[data-cast="shape"] {
-  /* drop-shadow reads noticeably softer than box-shadow at the same
-     value, so it gets its own scale. */
+[data-cast~="shape"] {
+  /* drop-shadow reads softer than box-shadow at the same value. */
   --cast-blur-shape: calc(var(--cast-blur) / 2);
 
   box-shadow: none;
@@ -112,14 +156,136 @@
 }
 
 /*
- * No script, or reduced motion: everything above still works. You get a
- * static shadow pointing straight down at a middling distance, which is
- * just a normal, tasteful shadow. The script only makes it directional.
+ * Surface mode. Lights the object's own face rather than the space behind
+ * it: a sheen gradient angled toward the light, plus optional grain.
+ *
+ * This is what stops an element reading as a flat rectangle with a shadow
+ * stuck under it.
+ */
+[data-cast~="surface"] {
+  /*
+   * A face is modelled from both ends: white toward the light, black away
+   * from it. Which end does the work depends entirely on the surface.
+   *
+   * Compositing leaves no room at the top of a light surface. White at
+   * alpha 0.14 over #fcfbf9 moves the red channel from 252 to 252.4 —
+   * under half a level. Black at the same alpha takes it to 216.7, a
+   * change roughly 84 times larger. On a dark surface it inverts.
+   *
+   * So these two numbers self-balance: the term with headroom dominates
+   * and the other costs almost nothing. Tune by surface, not by theme.
+   */
+  --cast-sheen: 0.14;
+  --cast-shade: 0.09;
+
+  /* How far each term carries in from its own edge. */
+  --cast-sheen-reach: 45%;
+
+  /* Grain strength and tile size in px. Grain exists to break up banding
+     in the sheen — large soft gradients band badly on 8-bit displays.
+     Set --cast-grain to 0, or --cast-grain-image to none, to drop it. */
+  --cast-grain: 0.09;
+  --cast-grain-size: 140;
+
+  position: relative;
+  /* Keeps the negative z-index layer above this element's own background
+     instead of punching through to an ancestor's. */
+  isolation: isolate;
+
+  /*
+   * These are derived HERE, on the element, not on ::before.
+   *
+   * --cast-ux and --cast-uy are registered `inherits: false`, and a
+   * pseudo-element counts as a child — so inside ::before they resolve to
+   * their initial values, not this element's. The failure is silent and
+   * convincing: the angle lands on 180deg, which is the gradient default,
+   * so the sheen looks right while tracking nothing.
+   *
+   * Declared at this level they resolve against the real vector, and the
+   * finished values inherit down to ::before.
+   *
+   * CSS gradient angles start at "to top" and run clockwise, while our
+   * vector has y pointing down, so a direction (vx, vy) becomes
+   * atan2(vx, -vy). The gradient runs from the lit face toward the dark
+   * one, which is the direction the shadow falls — so it takes the shadow
+   * vector directly and the bright end lands facing the light.
+   */
+  --cast-sheen-angle: atan2(var(--cast-ux), calc(var(--cast-uy) * -1));
+
+  /* Both terms fade with range, so distant objects stay matte. */
+  --cast-sheen-alpha: calc(var(--cast-sheen) * (1 - var(--cast-t)));
+  --cast-shade-alpha: calc(var(--cast-shade) * (1 - var(--cast-t)));
+}
+
+[data-cast~="surface"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+
+  /* Each end fades to a transparent stop of its OWN colour. Fading white
+     straight into black would run the midpoint through grey. */
+  background-image: linear-gradient(
+    var(--cast-sheen-angle),
+    rgb(255 255 255 / var(--cast-sheen-alpha)) 0%,
+    rgb(255 255 255 / 0) var(--cast-sheen-reach),
+    rgb(0 0 0 / 0) calc(100% - var(--cast-sheen-reach)),
+    rgb(0 0 0 / var(--cast-shade-alpha)) 100%
+  );
+}
+
+/*
+ * Grain gets its own layer purely so --cast-grain can be a real opacity
+ * dial. CSS has no per-layer opacity for background images, so sharing a
+ * layer with the sheen would leave grain strength stuck at whatever the
+ * SVG happens to bake in.
+ *
+ * The cost is honest: surface mode uses both pseudo-elements.
+ */
+[data-cast~="surface"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--cast-grain);
+  background-image: var(--cast-grain-image);
+  background-size:
+    calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
+}
+
+/*
+ * Monochrome fractal noise, generated once and tiled. Kept as its own
+ * property so it can be swapped for a bitmap, or removed with `none`.
+ */
+:root {
+  --cast-grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/*
+ * Grain has to sit at device-pixel scale. A 1x tile stretched across a 2x
+ * display goes soft and reads as dirt rather than grain, which is the
+ * usual reason this technique looks wrong.
+ */
+@media (min-resolution: 2dppx) {
+  [data-cast~="surface"]::after {
+    background-size:
+      calc(var(--cast-grain-size) * 0.5px) calc(var(--cast-grain-size) * 0.5px);
+  }
+}
+
+/*
+ * No script, or reduced motion: everything above still resolves. The
+ * initial values put the light overhead at a middling distance, which is
+ * an ordinary tasteful shadow. The script only makes it directional.
  */
 @media (prefers-reduced-motion: reduce) {
   [data-cast] {
     --cast-ux: 0;
     --cast-uy: 1;
-    --cast-t: 0.35;
+    --cast-d: 420;
   }
 }

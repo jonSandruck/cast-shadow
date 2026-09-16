@@ -10,7 +10,13 @@
  *
  *   --cast-ux   horizontal direction away from the light  (-1 to 1)
  *   --cast-uy   vertical direction away from the light    (-1 to 1)
- *   --cast-t    normalised distance from the light        ( 0 to 1)
+ *   --cast-d    horizontal distance from the light, in px
+ *
+ * Distance is handed over raw rather than normalised because the shadow
+ * is projected, not styled: the stylesheet divides it by the light's
+ * height and the element's own elevation. Those live in CSS, and reading
+ * them from here would mean a getComputedStyle call per element — the
+ * exact cost this design exists to avoid.
  *
  * Importing this module starts it automatically with sensible defaults.
  * Call castShadow() only if you need to configure something.
@@ -23,12 +29,13 @@ const DEFAULTS = {
   root: null,
   /** Light position, e.g. { x: '50%', y: '0%' }. Null reads it from CSS. */
   light: null,
-  /** Distance at which --cast-t hits 1. Null uses the viewport diagonal. */
+  /** Range over which --cast-t reaches 1. Null uses the viewport diagonal. */
   maxDistance: null,
 };
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
-const PROPS = ['--cast-ux', '--cast-uy', '--cast-t'];
+const PROPS = ['--cast-ux', '--cast-uy', '--cast-d'];
+const MAX_DISTANCE_PROP = '--cast-max-d';
 
 /**
  * Resolve a CSS-ish length against a viewport axis.
@@ -139,6 +146,13 @@ function createInstance(options = {}) {
         ? resolvedMax
         : Math.hypot(window.innerWidth, window.innerHeight);
 
+    // One write on the root, inherited by every element, so the stylesheet
+    // can normalise distance without a second per-element property.
+    document.documentElement.style.setProperty(
+      MAX_DISTANCE_PROP,
+      round(maxDistance),
+    );
+
     // Batch every read together. Interleaving reads and writes here is
     // what turns a smooth page into a slideshow.
     const fixedMemo = new Map();
@@ -176,28 +190,28 @@ function createInstance(options = {}) {
       const deltaY = centreY - light.y;
       const distance = Math.hypot(deltaX, deltaY);
 
-      // Straight offsets would be enough for a linear falloff, but the
-      // curve is CSS's business, so hand it a direction and a distance
-      // separately and let the stylesheet shape them.
+      // Direction and distance travel separately: the projection that
+      // turns them into an offset needs the element's elevation, which
+      // only the stylesheet knows.
       const unitX = distance ? round(deltaX / distance) : 0;
       const unitY = distance ? round(deltaY / distance) : 0;
-      const nearness = round(Math.min(distance / maxDistance, 1));
+      const span = round(distance);
 
       if (
         unitX === entry.lastX &&
         unitY === entry.lastY &&
-        nearness === entry.lastT
+        span === entry.lastD
       ) {
         continue;
       }
 
       entry.lastX = unitX;
       entry.lastY = unitY;
-      entry.lastT = nearness;
+      entry.lastD = span;
 
       element.style.setProperty('--cast-ux', unitX);
       element.style.setProperty('--cast-uy', unitY);
-      element.style.setProperty('--cast-t', nearness);
+      element.style.setProperty('--cast-d', span);
     }
   }
 
@@ -328,6 +342,7 @@ function createInstance(options = {}) {
     mutationObserver.disconnect();
 
     for (const element of entries.keys()) clearProperties(element);
+    document.documentElement.style.removeProperty(MAX_DISTANCE_PROP);
     entries.clear();
     visible.clear();
   }

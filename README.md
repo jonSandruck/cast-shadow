@@ -1,8 +1,12 @@
 # cast-shadow
 
-Shadows that point away from a light source fixed in the viewport. As an
-element moves across the screen, its shadow swings to match — growing
-longer, softer and fainter the further it gets from the light.
+A light source with a position in three dimensions. Objects sit at a height
+above the page, and their shadows are **projected** from that geometry
+rather than styled by hand.
+
+Move the light, or scroll, and every shadow re-aims itself. Raise an object
+and its shadow lengthens and softens together, because both come from the
+same number.
 
 No dependencies. No build step. Two files.
 
@@ -15,7 +19,7 @@ Copy `cast-shadow.css` and `cast-shadow.js` into your project, then:
 <script type="module" src="cast-shadow.js"></script>
 ```
 
-Mark anything you want to cast a shadow:
+Mark anything you want lit:
 
 ```html
 <div class="card" data-cast>…</div>
@@ -28,55 +32,146 @@ added later.
 > double-clicking it will fail with a CORS error. Serve the folder instead —
 > `python3 -m http.server` is enough.
 
-## Move the light
+## The model
 
-The light lives in CSS, so most projects never touch the JavaScript:
+For a light at height `H` and an object at height `h`, sitting a horizontal
+distance `d` from the light:
+
+```
+offset = d × h / (H − h)
+```
+
+Similar triangles, nothing more. Two things fall out for free:
+
+- An object at `h = 0` gets no offset. Flat on the page means no throw.
+- An object directly beneath the light gets no offset at any height.
+
+That same `h / (H − h)` factor is the **penumbra ratio**, so blur comes from
+one multiply instead of a hand-tuned curve. Two objects at the same height
+share a blur no matter where they sit on screen. That consistency is what
+makes a layout read as one lit scene rather than a pile of separate shadows.
+
+## The light
 
 ```css
 :root {
-  --cast-light-x: 50%;   /* percentages, px, vw and vh all work */
+  --cast-light-x: 50%;      /* percentages, px, vw and vh all work */
   --cast-light-y: 0%;
+  --cast-light-z: 600;      /* height above the page, unitless px */
+  --cast-light-size: 350;   /* width of the source, unitless px */
 }
 ```
+
+`--cast-light-size` is the most useful dial here. It's the width of the
+source, so it controls softness without touching position:
+
+| Value | Reads as |
+| --- | --- |
+| `60` | Hard midday sun, crisp edges |
+| `350` | Softbox. The default |
+| `900` | Overcast sky, very diffuse |
+
+Soft interface shadows imply a very large source, which is why the default
+is bigger than it first looks.
+
+### Why unitless
+
+`calc()` won't reliably divide a length by a length — Level 3 requires a
+plain number as the divisor, and Level 4's type math isn't something to
+build on yet. So heights are unitless numbers meaning pixels, and the
+arithmetic multiplies by `1px` at the end.
+
+This isn't a style choice. Elevation is per-element and lives in CSS. If
+JavaScript needed it, JavaScript would have to call `getComputedStyle` on
+every element — the exact cost this design exists to avoid.
+
+## Elevation
+
+```css
+.card   { --cast-elevation: 20; }
+.dialog { --cast-elevation: 80; }
+```
+
+Height above the page, in px. Rough guide:
+
+| Range | Suits |
+| --- | --- |
+| `2`–`8` | Pressed states, inset panels, hairline lift |
+| `12`–`24` | Cards, buttons, tiles |
+| `40`–`64` | Dropdowns, popovers, tooltips |
+| `80`–`120` | Modals, sheets, anything that owns the screen |
+
+There's no `--cast-length`. Shadow throw is derived, not set.
 
 ## Tuning
 
-Every visual decision is a custom property. Override them anywhere the
-cascade reaches — globally, per component, inside a media query, inside a
-dark-mode block.
+| Property | Default | What it does |
+| --- | --- | --- |
+| `--cast-elevation` | `20` | Height above the page, in px |
+| `--cast-light-z` | `600` | Light height, in px |
+| `--cast-light-size` | `350` | Source width — the softness dial |
+| `--cast-color` | `12 14 24` | Shadow colour, as RGB channels |
+| `--cast-alpha-near` | `0.34` | Opacity at the light |
+| `--cast-alpha-far` | `0.12` | Opacity at maximum range |
+| `--cast-throw-max` | `90` | Safety clamp on throw, in px |
+
+Opacity falloff is the one deliberately unphysical knob. It stands in for
+ambient fill, and without it distant shadows read as tar.
+
+The clamp matters because the projection is honest: as `h` approaches `H`,
+the offset runs to infinity. Correct, but not useful.
+
+## Surface mode
+
+`box-shadow` only ever describes the space *behind* an object. Surface mode
+lights the object's own face:
+
+```html
+<div class="panel" data-cast="surface">…</div>
+```
+
+You get a face modelled from both ends — highlight toward the light,
+shading away from it — plus fine grain.
+
+**Tune by surface, not by theme.** Compositing leaves almost no headroom at
+the top of a light surface: white at alpha `0.14` over `#fcfbf9` moves the
+red channel from 252 to 252.4, under half a level. Black at the same alpha
+takes it to 216.7 — a change roughly 84 times larger. On a dark surface it
+inverts. So a light panel is modelled almost entirely by `--cast-shade` and
+a dark one almost entirely by `--cast-sheen`, and the pair self-balances
+without needing to know which theme is active.
 
 | Property | Default | What it does |
 | --- | --- | --- |
-| `--cast-length` | `28px` | Shadow throw at maximum distance |
-| `--cast-blur-near` | `3px` | Blur for elements at the light |
-| `--cast-blur-far` | `26px` | Blur at maximum distance |
-| `--cast-alpha-near` | `0.34` | Opacity at the light |
-| `--cast-alpha-far` | `0.12` | Opacity at maximum distance |
-| `--cast-color` | `12 14 24` | Shadow colour, as RGB channels |
-| `--cast-ease` | `t * (2 - t)` | Falloff curve for length |
-| `--cast-max-distance` | viewport diagonal | Distance at which `--cast-t` reaches `1` |
+| `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
+| `--cast-shade` | `0.09` | Shading strength on the unlit edge |
+| `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
+| `--cast-grain` | `0.09` | Grain opacity |
+| `--cast-grain-size` | `140` | Grain tile size, in px |
+| `--cast-grain-image` | fractal noise | Set to `none` to drop it |
 
-A different look is just a class:
+The sheen angle comes from CSS `atan2()`, so this needs no extra
+JavaScript. Grain exists to break up banding — large soft gradients band
+badly on 8-bit displays, and it halves its tile on high-DPI screens so the
+grain stays at device-pixel scale instead of going soft.
 
-```css
-.warm {
-  --cast-length: 48px;
-  --cast-blur-far: 40px;
-  --cast-color: 92 46 12;
-}
-```
+**Costs, stated plainly:**
 
-### Shape mode
+- Surface mode uses **both** `::before` and `::after`. If you need those
+  pseudo-elements, you can't use it on that element.
+- It sets `isolation: isolate`, which creates a stacking context.
+- It isn't designed to combine with shape mode.
 
-By default the shadow follows the element's border box, which is right for
-cards, buttons and panels. For a cutout PNG or an SVG, switch to the alpha
-silhouette:
+## Shape mode
+
+By default the shadow follows the border box, which is right for cards,
+buttons and panels. For a cutout PNG or an SVG, trace the alpha silhouette:
 
 ```html
 <svg data-cast="shape">…</svg>
 ```
 
-Three things to know before you use it:
+Three things to know:
 
 - `filter` creates a stacking context **and** a containing block. Any
   `position: fixed` descendant will anchor to this element instead of the
@@ -96,11 +191,14 @@ decision at all:
 | --- | --- | --- |
 | `--cast-ux` | `-1` to `1` | Horizontal direction away from the light |
 | `--cast-uy` | `-1` to `1` | Vertical direction away from the light |
-| `--cast-t` | `0` to `1` | Normalised distance from the light |
+| `--cast-d` | px | Horizontal distance from the light |
 
-The stylesheet turns those into an offset, a blur and an opacity. If you
-want a different relationship between distance and shadow, you change CSS,
-not JavaScript.
+It also writes `--cast-max-d` once on `:root`, so the stylesheet can derive
+`--cast-t` — a `0`-to-`1` range value — without a second per-element write.
+
+Distance arrives raw rather than normalised because the shadow is
+projected, not styled. The stylesheet divides it by the light's height and
+the element's own elevation.
 
 ### Performance
 
@@ -121,10 +219,10 @@ Only needed if you want to configure something.
 import { castShadow } from './cast-shadow.js';
 
 const shadows = castShadow({
-  selector: '[data-cast]',   // which elements to track
-  root: document,            // subtree to watch
+  selector: '[data-cast]',        // which elements to track
+  root: document,                 // subtree to watch
   light: { x: '20%', y: '10%' },  // overrides the CSS properties
-  maxDistance: null,         // null = viewport diagonal
+  maxDistance: null,              // null = viewport diagonal
 });
 
 shadows.setLight('80%', '0%');  // move the light
@@ -134,6 +232,10 @@ shadows.destroy();              // remove listeners and properties
 
 Calling `castShadow()` replaces the instance that started on import, so the
 two never fight over the same element.
+
+Note that `x` and `y` are JavaScript's business but `z` is not. Height lives
+in CSS with elevation, because they have to be in the same unit space for
+the projection to mean anything.
 
 ## Accessibility
 
@@ -150,16 +252,14 @@ ordinary, tasteful shadow. The script only makes it directional.
   need it.
 - **Shadows don't land on anything.** `box-shadow` draws behind its own
   element. There's no occlusion and nothing catches a shadow cast by a
-  neighbour. This is a lighting *effect*, not a lighting model.
-- **Very long throws stop reading as light.** Past roughly 60px the effect
-  starts to look like a sticker with a smear under it. Raise
-  `--cast-length` carefully.
+  neighbour. This is a lighting *effect*, not a renderer.
+- **One light.** Two objects can't be lit from different directions.
 
 ## Browser support
 
-Needs `@property`, `IntersectionObserver` and `ResizeObserver` — Chrome and
-Edge 85+, Safari 16.4+, Firefox 128+. Older browsers ignore the custom
-properties and fall back to the static shadow.
+Needs `@property`, `atan2()`, `IntersectionObserver` and `ResizeObserver` —
+Chrome and Edge 111+, Safari 16.4+, Firefox 128+. Older browsers ignore the
+custom properties and fall back to the static shadow.
 
 ## Demo
 
