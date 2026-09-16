@@ -163,11 +163,23 @@
  * stuck under it.
  */
 [data-cast~="surface"] {
-  /* Peak sheen strength, at the light. */
+  /*
+   * A face is modelled from both ends: white toward the light, black away
+   * from it. Which end does the work depends entirely on the surface.
+   *
+   * Compositing leaves no room at the top of a light surface. White at
+   * alpha 0.14 over #fcfbf9 moves the red channel from 252 to 252.4 —
+   * under half a level. Black at the same alpha takes it to 216.7, a
+   * change roughly 84 times larger. On a dark surface it inverts.
+   *
+   * So these two numbers self-balance: the term with headroom dominates
+   * and the other costs almost nothing. Tune by surface, not by theme.
+   */
   --cast-sheen: 0.14;
+  --cast-shade: 0.09;
 
-  /* How far across the face the sheen reaches. */
-  --cast-sheen-reach: 65%;
+  /* How far each term carries in from its own edge. */
+  --cast-sheen-reach: 45%;
 
   /* Grain strength and tile size in px. Grain exists to break up banding
      in the sheen — large soft gradients band badly on 8-bit displays.
@@ -200,8 +212,9 @@
    */
   --cast-sheen-angle: atan2(var(--cast-ux), calc(var(--cast-uy) * -1));
 
-  /* Sheen fades with range, so objects far from the light stay matte. */
+  /* Both terms fade with range, so distant objects stay matte. */
   --cast-sheen-alpha: calc(var(--cast-sheen) * (1 - var(--cast-t)));
+  --cast-shade-alpha: calc(var(--cast-shade) * (1 - var(--cast-t)));
 }
 
 [data-cast~="surface"]::before {
@@ -212,10 +225,14 @@
   pointer-events: none;
   border-radius: inherit;
 
+  /* Each end fades to a transparent stop of its OWN colour. Fading white
+     straight into black would run the midpoint through grey. */
   background-image: linear-gradient(
     var(--cast-sheen-angle),
     rgb(255 255 255 / var(--cast-sheen-alpha)) 0%,
-    rgb(255 255 255 / 0) var(--cast-sheen-reach)
+    rgb(255 255 255 / 0) var(--cast-sheen-reach),
+    rgb(0 0 0 / 0) calc(100% - var(--cast-sheen-reach)),
+    rgb(0 0 0 / var(--cast-shade-alpha)) 100%
   );
 }
 

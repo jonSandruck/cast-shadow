@@ -341,10 +341,12 @@
 
   <p class="eyebrow">Surface lighting</p>
   <p class="note">
-    <code>data-cast="surface"</code> lights the object's own face: a sheen
-    angled toward the light, and fine grain to stop the gradient banding.
-    The angle comes from CSS <code>atan2()</code>, so this needs no extra
-    JavaScript.
+    <code>data-cast="surface"</code> models the object's own face from both
+    ends: highlight toward the light, shading away from it. Which end does
+    the work depends on the surface, not the theme — white has almost no
+    headroom on a pale panel, so this one is modelled almost entirely by
+    its shaded corner. The angle comes from CSS <code>atan2()</code>, so
+    none of it needs extra JavaScript.
   </p>
   <div class="pair">
     <figure>
@@ -353,7 +355,7 @@
     </figure>
     <figure>
       <div class="tile" data-cast="surface" style="--cast-elevation: 40"></div>
-      <figcaption>Shadow, sheen and grain.</figcaption>
+      <figcaption>Shadow, modelling and grain.</figcaption>
     </figure>
   </div>
 

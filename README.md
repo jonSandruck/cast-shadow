@@ -130,12 +130,22 @@ lights the object's own face:
 <div class="panel" data-cast="surface">…</div>
 ```
 
-You get a sheen angled toward the light, plus fine grain.
+You get a face modelled from both ends — highlight toward the light,
+shading away from it — plus fine grain.
+
+**Tune by surface, not by theme.** Compositing leaves almost no headroom at
+the top of a light surface: white at alpha `0.14` over `#fcfbf9` moves the
+red channel from 252 to 252.4, under half a level. Black at the same alpha
+takes it to 216.7 — a change roughly 84 times larger. On a dark surface it
+inverts. So a light panel is modelled almost entirely by `--cast-shade` and
+a dark one almost entirely by `--cast-sheen`, and the pair self-balances
+without needing to know which theme is active.
 
 | Property | Default | What it does |
 | --- | --- | --- |
-| `--cast-sheen` | `0.14` | Peak highlight strength, at the light |
-| `--cast-sheen-reach` | `65%` | How far the sheen carries across the face |
+| `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
+| `--cast-shade` | `0.09` | Shading strength on the unlit edge |
+| `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
 | `--cast-grain` | `0.09` | Grain opacity |
 | `--cast-grain-size` | `140` | Grain tile size, in px |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
