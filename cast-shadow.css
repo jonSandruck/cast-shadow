@@ -249,6 +249,17 @@
   /* How far each term carries in from its own edge. */
   --cast-sheen-reach: 45%;
 
+  /*
+   * Grain scale, in CSS px, and the same at every device pixel ratio.
+   *
+   * An earlier version halved this above 2dppx to keep each speckle one
+   * device pixel wide. That was the wrong instinct: grain hides banding by
+   * camouflage, and camouflage only works when the disrupting pattern is
+   * near the scale of what it is hiding. Grain that fine averages out in
+   * the eye and leaves the step edge perfectly visible — so the technique
+   * was quietly weakest on exactly the displays people notice banding on.
+   */
+
   /* Grain strength and tile size in px. Grain exists to break up banding
      in the sheen — large soft gradients band badly on 8-bit displays.
      Set --cast-grain to 0, or --cast-grain-image to none, to drop it. */
@@ -494,18 +505,6 @@ body[data-cast~="room"]::before {
      Plain alpha compositing drags everything toward grey as it gets
      stronger, which is the usual reason loud grain looks like dirt. */
   --cast-grain-blend: overlay;
-}
-
-/*
- * Grain has to sit at device-pixel scale. A 1x tile stretched across a 2x
- * display goes soft and reads as dirt rather than grain, which is the
- * usual reason this technique looks wrong.
- */
-@media (min-resolution: 2dppx) {
-  [data-cast~="surface"]::after {
-    background-size:
-      calc(var(--cast-grain-size) * 0.5px) calc(var(--cast-grain-size) * 0.5px);
-  }
 }
 
 /*

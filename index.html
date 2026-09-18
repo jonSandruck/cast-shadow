@@ -24,6 +24,14 @@
 
     --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* Noise at four feature sizes, for the tuner's detail control. Tile
+       size scales the whole pattern; this changes how big the speckles are
+       within it, which is the other half of how coarse the grain reads. */
+    --grain-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+    --grain-medium: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+    --grain-coarse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+    --grain-chunky: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
   }
 
   @media (prefers-color-scheme: dark) {
@@ -592,7 +600,15 @@
   <input type="range" id="t-grain" min="0" max="1" step="0.02" value="0.4">
 
   <label for="t-size">tile size <output id="t-size-v">140</output></label>
-  <input type="range" id="t-size" min="30" max="360" step="10" value="140">
+  <input type="range" id="t-size" min="30" max="900" step="10" value="140">
+
+  <label for="t-detail">detail</label>
+  <select id="t-detail">
+    <option value="fine">fine</option>
+    <option value="medium">medium</option>
+    <option value="coarse">coarse</option>
+    <option value="chunky">chunky</option>
+  </select>
 
   <label for="t-blend">blend</label>
   <select id="t-blend">
@@ -686,7 +702,7 @@
   // library's own defaults, so Reset means "what a fresh page looks like",
   // not "whatever the markup happened to say".
   const TUNER_DEFAULTS = {
-    grain: '0.4', size: '140', blend: 'overlay',
+    grain: '0.4', size: '140', blend: 'overlay', detail: 'fine',
     vig: '0.16', pool: '0.1', strip: false,
   };
 
@@ -694,6 +710,7 @@
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
   const stripInput = document.getElementById('t-strip');
+  const detailInput = document.getElementById('t-detail');
   const vigInput = document.getElementById('t-vig');
   const poolInput = document.getElementById('t-pool');
 
@@ -715,6 +732,7 @@
         --cast-grain: ${grain};
         --cast-grain-size: ${size};
         --cast-grain-blend: ${blend};
+        --cast-grain-image: var(--grain-${detailInput.value});
       }
       [data-cast~="room"] {
         --cast-room-dark: rgb(0 0 0 / ${vig});
@@ -724,7 +742,9 @@
     document.documentElement.classList.toggle('stripped', stripInput.checked);
 
     try {
-      localStorage.setItem('cast-shadow-grain', JSON.stringify({ grain, size, blend, vig, pool }));
+      localStorage.setItem('cast-shadow-grain', JSON.stringify({
+        grain, size, blend, vig, pool, detail: detailInput.value,
+      }));
     } catch {}
   }
 
@@ -735,6 +755,7 @@
       grainInput.value = saved.grain ?? grainInput.value;
       sizeInput.value = saved.size ?? sizeInput.value;
       blendInput.value = saved.blend ?? blendInput.value;
+      detailInput.value = saved.detail ?? detailInput.value;
       vigInput.value = saved.vig ?? vigInput.value;
       poolInput.value = saved.pool ?? poolInput.value;
     }
@@ -742,7 +763,7 @@
 
   applyTuning();
 
-  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput]) {
+  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput, detailInput]) {
     el.addEventListener('input', applyTuning);
   }
 
@@ -750,6 +771,7 @@
     grainInput.value = TUNER_DEFAULTS.grain;
     sizeInput.value = TUNER_DEFAULTS.size;
     blendInput.value = TUNER_DEFAULTS.blend;
+    detailInput.value = TUNER_DEFAULTS.detail;
     vigInput.value = TUNER_DEFAULTS.vig;
     poolInput.value = TUNER_DEFAULTS.pool;
     stripInput.checked = TUNER_DEFAULTS.strip;
