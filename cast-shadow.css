@@ -326,6 +326,114 @@
 }
 
 /*
+ * Room mode. Lights the space an object sits in rather than the object:
+ * a pool of light centred on the lamp, falling off to a vignette at the
+ * edges. Without it the objects are lit and the room they sit in is not,
+ * which is most of why a page still reads flat behind them.
+ *
+ * Nothing here touches background-image, so it composites over whatever
+ * backgrounds the element already has without needing to know them.
+ *
+ * This is the only part of the library that needs no JavaScript of its
+ * own. The pool's position comes out of numbers already on the element:
+ * the element's centre is 50% 50% of its own box, and the vector to the
+ * light is (ux, uy) * d, so the light sits at centre minus that vector,
+ * in the element's own coordinates.
+ */
+[data-cast~="room"] {
+  /* Radius of the lit pool, in px, unitless. */
+  --cast-room-reach: 900;
+
+  /* Two ends again. On a pale page the pool does nothing and the vignette
+     carries it; on a dark page the reverse. Tune by surface, not theme. */
+  --cast-room-light: rgb(255 255 255 / 0.1);
+  --cast-room-dark: rgb(0 0 0 / 0.16);
+
+  /* Higher than surface mode's, because a room-sized gradient bands far
+     worse than a card-sized one. Measured on a 110px strip of page
+     background: with grain off the value steps every 32px, at 0.05 every
+     12px, and at 0.12 every 4px, which is where it stops reading as
+     banding. Past that only the grain itself gets more visible.
+
+     A dark page needs less, not more: the same strip reaches 6px at 0.05
+     and gains nothing above it. Tune by surface, as everywhere else. */
+  --cast-grain: 0.12;
+  --cast-grain-size: 140;
+
+  --cast-room-at:
+    calc(50% - var(--cast-ux) * var(--cast-d) * 1px)
+    calc(50% - var(--cast-uy) * var(--cast-d) * 1px);
+
+  position: relative;
+  isolation: isolate;
+}
+
+[data-cast~="room"]::before,
+[data-cast~="room"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+[data-cast~="room"]::before {
+  background-image:
+    radial-gradient(
+      circle calc(var(--cast-room-reach) * 1px) at var(--cast-room-at),
+      var(--cast-room-light),
+      rgb(255 255 255 / 0)
+    ),
+    radial-gradient(
+      circle farthest-corner at var(--cast-room-at),
+      rgb(0 0 0 / 0),
+      var(--cast-room-dark)
+    );
+}
+
+[data-cast~="room"]::after {
+  opacity: var(--cast-grain);
+  background-image: var(--cast-grain-image);
+  background-size:
+    calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
+}
+
+/*
+ * The page itself is the one case that earns a special rule. Its box is
+ * the whole document, so an absolute overlay would repaint a gradient
+ * thousands of pixels tall on every scroll frame. A fixed overlay paints
+ * the viewport only — and since the gradient box is then the viewport,
+ * the light's own properties can position it directly, with no vector
+ * arithmetic at all.
+ */
+body[data-cast~="room"] {
+  /* A room is the space, not an object in it. The base rule would
+     otherwise hang a drop shadow off the page itself. */
+  box-shadow: none;
+}
+
+body[data-cast~="room"]::before,
+body[data-cast~="room"]::after {
+  position: fixed;
+}
+
+body[data-cast~="room"]::before {
+  background-image:
+    radial-gradient(
+      circle calc(var(--cast-room-reach) * 1px)
+      at var(--cast-light-x) var(--cast-light-y),
+      var(--cast-room-light),
+      rgb(255 255 255 / 0)
+    ),
+    radial-gradient(
+      circle farthest-corner at var(--cast-light-x) var(--cast-light-y),
+      rgb(0 0 0 / 0),
+      var(--cast-room-dark)
+    );
+}
+
+/*
  * Monochrome fractal noise, generated once and tiled. Kept as its own
  * property so it can be swapped for a bitmap, or removed with `none`.
  */

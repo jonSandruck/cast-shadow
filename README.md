@@ -180,6 +180,63 @@ but a hairline crossing a fade threshold reads as flicker. Multiply by
   the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
   and surface do combine, and that pairing is the strongest look here.
 
+## Room mode
+
+Lights the space rather than the object: a pool centred on the lamp,
+falling off to a vignette at the edges. Works on the page or on any
+element.
+
+```html
+<body data-cast="room">              <!-- the whole page -->
+<section data-cast="room">…</section> <!-- just this box -->
+```
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `--cast-room-reach` | `900` | Radius of the lit pool, in px |
+| `--cast-room-light` | `rgb(255 255 255 / 0.1)` | Colour of the pool |
+| `--cast-room-dark` | `rgb(0 0 0 / 0.16)` | Colour of the vignette |
+| `--cast-grain` | `0.12` | Grain opacity |
+| `--cast-grain-size` | `140` | Grain tile size, in px |
+
+**It never touches `background-image`.** The pool is drawn on a pseudo-element
+overlay, so it composites over whatever backgrounds the element already has
+without needing to know what they are. Stacking gradients into
+`background-image` by hand works, but only if you already know the full
+stack; this doesn't.
+
+**It needs no JavaScript.** The pool's position falls out of numbers already
+on the element:
+
+```css
+at calc(50% - var(--cast-ux) * var(--cast-d) * 1px)
+   calc(50% - var(--cast-uy) * var(--cast-d) * 1px)
+```
+
+The element's centre is `50% 50%` of its own box and the vector to the light
+is `(ux, uy) × d`, so subtracting one from the other gives the light's
+position inside that element, in the element's own coordinates. The gradient
+centre is allowed to fall outside the box, so this keeps working when the
+light is nowhere near the element.
+
+**`<body>` is a special case, deliberately.** Its box is the whole document,
+so an absolute overlay would repaint a gradient thousands of pixels tall on
+every scroll frame. On body the overlay is fixed instead, which paints the
+viewport only — and since the gradient box is then the viewport, the light's
+own properties position it directly with no arithmetic at all. Body also
+gets `box-shadow: none`, since a room is the space rather than an object
+floating above itself.
+
+**Grain matters more here than anywhere else.** A room-sized gradient bands
+far worse than a card-sized one. Measured across a 110px strip of page
+background: with grain off the value steps every 32px, at `0.05` every 12px,
+and at `0.12` every 4px, which is where it stops reading as banding. A dark
+page needs *less* — the same strip reaches 6px at `0.05` and gains nothing
+above it.
+
+Room mode uses both pseudo-elements, so it can't share an element with
+surface mode. Put room on the container and surface on the things inside it.
+
 ## Surface mode
 
 `box-shadow` only ever describes the space *behind* an object. Surface mode

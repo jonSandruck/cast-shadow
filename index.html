@@ -46,6 +46,7 @@
       --cast-sheen: 0.07;
       --cast-grain: 0.05;
     }
+
   }
 
   :root[data-theme="dark"] {
@@ -66,6 +67,7 @@
     --cast-sheen: 0.07;
     --cast-grain: 0.05;
   }
+
 
   /* ---- Base ---------------------------------------------------------- */
 
@@ -236,6 +238,14 @@
     text-align: center;
   }
 
+  .panel {
+    width: min(100%, 520px);
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+
   .pair figure { margin: 0; }
   .pair figcaption { font-size: 13px; color: var(--muted); margin-top: 22px; }
 
@@ -289,7 +299,7 @@
   @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
 </style>
 </head>
-<body>
+<body data-cast="room">
 
 <div class="bar">
   <strong data-cast>cast-shadow</strong>
@@ -384,6 +394,24 @@
       <figcaption><code>surface edge</code>. Modelled face and rim together.</figcaption>
     </figure>
   </div>
+
+  <p class="eyebrow">Room lighting</p>
+  <p class="note">
+    <code>data-cast="room"</code> lights the space rather than the object:
+    a pool centred on the lamp, falling off to a vignette at the edges.
+    <strong>This whole page is in room mode</strong> — move the light and
+    watch the background follow it. It works on any element too, so the
+    panel below carries its own pool, clipped to its own box.
+  </p>
+  <div class="row">
+    <div class="panel" data-cast="room" style="--cast-room-reach: 420"></div>
+  </div>
+  <p class="note" style="margin-top: 26px">
+    None of this needs JavaScript. The pool's position comes from numbers
+    already on the element, and nothing here touches
+    <code>background-image</code> — it composites over whatever backgrounds
+    the element already had.
+  </p>
 
   <p class="eyebrow">Shapes</p>
   <div class="row">
