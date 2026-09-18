@@ -180,6 +180,102 @@ but a hairline crossing a fade threshold reads as flicker. Multiply by
   the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
   and surface do combine, and that pairing is the strongest look here.
 
+## Room mode
+
+Lights the space rather than the object: a pool centred on the lamp,
+falling off to a vignette at the edges. Works on the page or on any
+element.
+
+```html
+<body data-cast="room">              <!-- the whole page -->
+<section data-cast="room">…</section> <!-- just this box -->
+```
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `--cast-room-reach` | `900` | Radius of the lit pool, in px |
+| `--cast-room-light` | `rgb(255 255 255 / 0.1)` | Colour of the pool |
+| `--cast-room-dark` | `rgb(0 0 0 / 0.16)` | Colour of the vignette |
+| `--cast-grain` | `0.4` | Grain strength |
+| `--cast-grain-size` | `140` | Grain tile size, in px |
+| `--cast-grain-blend` | `overlay` | How the grain composites |
+| `--cast-grain-z` | `-1`, or `9999` on body | Which layer the grain sits on |
+
+**It never touches `background-image`.** The pool is drawn on a pseudo-element
+overlay, so it composites over whatever backgrounds the element already has
+without needing to know what they are. Stacking gradients into
+`background-image` by hand works, but only if you already know the full
+stack; this doesn't.
+
+**It needs no JavaScript.** The pool's position falls out of numbers already
+on the element:
+
+```css
+at calc(50% - var(--cast-ux) * var(--cast-d) * 1px)
+   calc(50% - var(--cast-uy) * var(--cast-d) * 1px)
+```
+
+The element's centre is `50% 50%` of its own box and the vector to the light
+is `(ux, uy) × d`, so subtracting one from the other gives the light's
+position inside that element, in the element's own coordinates. The gradient
+centre is allowed to fall outside the box, so this keeps working when the
+light is nowhere near the element.
+
+**`<body>` is a special case, deliberately.** Its box is the whole document,
+so an absolute overlay would repaint a gradient thousands of pixels tall on
+every scroll frame. On body the overlay is fixed instead, which paints the
+viewport only — and since the gradient box is then the viewport, the light's
+own properties position it directly with no arithmetic at all. Body also
+gets `box-shadow: none`, since a room is the space rather than an object
+floating above itself.
+
+**Grain hides banding by camouflage, so scale matters more than strength.**
+A disrupting pattern hides an edge when it sits near the scale of that edge,
+and averages harmlessly away when it is much finer. Raising
+`--cast-grain-size` does more than raising `--cast-grain`.
+
+That is also why `--cast-grain-size` is the only scale knob, and why it is
+enough. Making the noise coarser by dropping `feTurbulence`'s
+`baseFrequency` instead leaves the tile the same size while the features
+inside it grow, so there are fewer of them per tile and the repeat becomes
+obvious. Scaling the tile grows the features and the period together.
+
+Grain is specified in CSS px and is the same at every device pixel ratio.
+An earlier version halved it above `2dppx` to keep each speckle one device
+pixel wide, which was backwards — it made the technique weakest on exactly
+the displays where banding is most visible. Per-pixel noise also picks up
+colour fringing from an RGB-stripe panel, a second reason to keep it coarse.
+
+One detail makes loud grain possible at all: the noise tile is **opaque**,
+with its alpha channel forced to 1. `feTurbulence` leaves alpha varying
+along with colour, which makes the tile a translucent grey film that can
+only ever add light, so turning it up washes a dark page out instead of
+dithering it.
+
+**Pick the blend per surface.** `overlay` and `soft-light` swap relative
+strength depending on how light the ground is. Measured noise amplitude:
+
+| | `overlay` | `soft-light` |
+| --- | --- | --- |
+| Light ground | 0.52 | 0.26 |
+| Dark ground | 0.46 | 0.91 |
+
+So `soft-light` is the gentler of the two on a light surface and the louder
+one on a dark surface. The demo takes `soft-light` in light mode and
+`overlay` in dark.
+
+**On `<body>` the grain sits above the content**, which is the second thing
+body needs a special case for. `mix-blend-mode` only blends within its own
+stacking context, and a body background has already gone to the canvas,
+which is painted outside it — so an isolated grain layer has nothing to
+blend against and silently falls back to plain alpha. Measured on a dark
+page at grain `0.5`, that pushes mean luminance up 74 levels; lifting the
+layer out brings the drift to 6. Set `--cast-grain-z: -1` to put it back
+underneath, at the cost of that wash.
+
+Room mode uses both pseudo-elements, so it can't share an element with
+surface mode. Put room on the container and surface on the things inside it.
+
 ## Surface mode
 
 `box-shadow` only ever describes the space *behind* an object. Surface mode

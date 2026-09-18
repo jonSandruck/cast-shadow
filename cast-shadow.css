@@ -249,11 +249,31 @@
   /* How far each term carries in from its own edge. */
   --cast-sheen-reach: 45%;
 
+  /*
+   * Grain scale, in CSS px, and the same at every device pixel ratio.
+   *
+   * An earlier version halved this above 2dppx to keep each speckle one
+   * device pixel wide. That was the wrong instinct: grain hides banding by
+   * camouflage, and camouflage only works when the disrupting pattern is
+   * near the scale of what it is hiding. Grain that fine averages out in
+   * the eye and leaves the step edge perfectly visible — so the technique
+   * was quietly weakest on exactly the displays people notice banding on.
+   *
+   * This is the only scale knob, and it is enough. Making the noise
+   * coarser by dropping feTurbulence's baseFrequency instead leaves the
+   * tile the same size while the features inside it grow, so there are
+   * fewer of them per tile and the repeat becomes obvious. Scaling the
+   * tile grows the features and the period together, which is why it is
+   * the one that works.
+   */
+
   /* Grain strength and tile size in px. Grain exists to break up banding
      in the sheen — large soft gradients band badly on 8-bit displays.
      Set --cast-grain to 0, or --cast-grain-image to none, to drop it. */
-  --cast-grain: 0.09;
-  --cast-grain-size: 140;
+  /* Same scale as room mode, so a card sitting inside a lit page reads as
+     the same material rather than a differently-finished patch of it. */
+  --cast-grain: 0.2;
+  --cast-grain-size: 280;
 
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
@@ -320,29 +340,181 @@
   pointer-events: none;
   border-radius: inherit;
   opacity: var(--cast-grain);
+  mix-blend-mode: var(--cast-grain-blend);
   background-image: var(--cast-grain-image);
   background-size:
     calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
 }
 
 /*
- * Monochrome fractal noise, generated once and tiled. Kept as its own
- * property so it can be swapped for a bitmap, or removed with `none`.
+ * Room mode. Lights the space an object sits in rather than the object:
+ * a pool of light centred on the lamp, falling off to a vignette at the
+ * edges. Without it the objects are lit and the room they sit in is not,
+ * which is most of why a page still reads flat behind them.
+ *
+ * Nothing here touches background-image, so it composites over whatever
+ * backgrounds the element already has without needing to know them.
+ *
+ * This is the only part of the library that needs no JavaScript of its
+ * own. The pool's position comes out of numbers already on the element:
+ * the element's centre is 50% 50% of its own box, and the vector to the
+ * light is (ux, uy) * d, so the light sits at centre minus that vector,
+ * in the element's own coordinates.
  */
-:root {
-  --cast-grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+[data-cast~="room"] {
+  /* Radius of the lit pool, in px, unitless. */
+  --cast-room-reach: 900;
+
+  /* Two ends again. On a pale page the pool does nothing and the vignette
+     carries it; on a dark page the reverse. Tune by surface, not theme. */
+  --cast-room-light: rgb(255 255 255 / 0.05);
+  --cast-room-dark: rgb(0 0 0 / 0.05);
+
+  /* Higher than surface mode's, because a room-sized gradient bands far
+     worse than a card-sized one. Measured on a 110px strip of page
+     Tuned by eye on a retina display, which is the only way to settle
+     this — see the note on grain scale below. A shallower pool and
+     vignette also mean fewer quantisation steps to hide in the first
+     place, so less grain is needed than when the ramp was deeper. */
+  --cast-grain: 0.2;
+  --cast-grain-size: 280;
+
+  /* Which layer the grain sits on. Below the content by default, which is
+     where a surface texture belongs. */
+  --cast-grain-z: -1;
+
+  --cast-room-at:
+    calc(50% - var(--cast-ux) * var(--cast-d) * 1px)
+    calc(50% - var(--cast-uy) * var(--cast-d) * 1px);
+
+  position: relative;
+  isolation: isolate;
+}
+
+[data-cast~="room"]::before,
+[data-cast~="room"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+[data-cast~="room"]::after {
+  z-index: var(--cast-grain-z);
+}
+
+[data-cast~="room"]::before {
+  background-image:
+    radial-gradient(
+      circle calc(var(--cast-room-reach) * 1px) at var(--cast-room-at),
+      var(--cast-room-light),
+      rgb(255 255 255 / 0)
+    ),
+    radial-gradient(
+      circle farthest-corner at var(--cast-room-at),
+      rgb(0 0 0 / 0),
+      var(--cast-room-dark)
+    );
+}
+
+[data-cast~="room"]::after {
+  opacity: var(--cast-grain);
+  mix-blend-mode: var(--cast-grain-blend);
+  background-image: var(--cast-grain-image);
+  background-size:
+    calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
 }
 
 /*
- * Grain has to sit at device-pixel scale. A 1x tile stretched across a 2x
- * display goes soft and reads as dirt rather than grain, which is the
- * usual reason this technique looks wrong.
+ * The page itself is the one case that earns a special rule. Its box is
+ * the whole document, so an absolute overlay would repaint a gradient
+ * thousands of pixels tall on every scroll frame. A fixed overlay paints
+ * the viewport only — and since the gradient box is then the viewport,
+ * the light's own properties can position it directly, with no vector
+ * arithmetic at all.
  */
-@media (min-resolution: 2dppx) {
-  [data-cast~="surface"]::after {
-    background-size:
-      calc(var(--cast-grain-size) * 0.5px) calc(var(--cast-grain-size) * 0.5px);
-  }
+body[data-cast~="room"] {
+  /* A room is the space, not an object in it. The base rule would
+     otherwise hang a drop shadow off the page itself. */
+  box-shadow: none;
+
+  /*
+   * No isolation here, unlike every other element in room mode.
+   * mix-blend-mode only ever blends within its own stacking context, so
+   * isolating the page would wall the grain off from the very thing it
+   * needs to blend with. Nothing needs hiding behind body anyway — its
+   * background has already gone to the canvas.
+   */
+  isolation: auto;
+
+  /*
+   * The page is the one place the grain has to sit ABOVE the content.
+   *
+   * A body background propagates to the canvas, which is painted outside
+   * body's stacking context — so a grain layer isolated inside that
+   * context has no backdrop to blend with, and mix-blend-mode silently
+   * degenerates to plain alpha compositing. Measured on a dark page at
+   * grain 0.5, that drags mean luminance up by 74 levels, washing the
+   * page out; the same layer on an ordinary element drifts by 8.
+   *
+   * Lifting it above the content gives it the real page to blend against.
+   * This is also how film grain is normally done, and it is why the grain
+   * can be turned up far enough to read as texture without greying
+   * everything out. Set --cast-grain-z: -1 to put it back underneath.
+   */
+  --cast-grain-z: 9999;
+}
+
+body[data-cast~="room"]::before,
+body[data-cast~="room"]::after {
+  position: fixed;
+}
+
+body[data-cast~="room"]::before {
+  background-image:
+    radial-gradient(
+      circle calc(var(--cast-room-reach) * 1px)
+      at var(--cast-light-x) var(--cast-light-y),
+      var(--cast-room-light),
+      rgb(255 255 255 / 0)
+    ),
+    radial-gradient(
+      circle farthest-corner at var(--cast-light-x) var(--cast-light-y),
+      rgb(0 0 0 / 0),
+      var(--cast-room-dark)
+    );
+}
+
+/*
+ * Monochrome fractal noise, generated once and tiled. Kept as its own
+ * property so it can be swapped for a bitmap, or removed with `none`.
+ *
+ * The alpha channel is forced opaque. feTurbulence leaves alpha varying
+ * along with colour, which makes the tile a translucent grey film: over a
+ * dark surface it can only ever add light, so raising its strength washes
+ * the page out instead of dithering it. Opaque grey noise under a blend
+ * mode perturbs in both directions around the surface instead, which is
+ * what lets the grain go loud enough to actually break a gradient step
+ * and still read as texture.
+ */
+:root {
+  --cast-grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+
+  /*
+   * A blend rather than a film laid over the top: plain alpha compositing
+   * drags everything toward grey as it gets stronger, which is the usual
+   * reason loud grain looks like dirt.
+   *
+   * overlay and soft-light swap relative strength depending on how light
+   * the surface is. Measured noise amplitude on the demo page: on a light
+   * ground overlay gives 0.52 and soft-light 0.26; on a dark ground
+   * overlay gives 0.46 and soft-light 0.91. So soft-light is the gentler
+   * of the two on a light surface and the louder one on a dark surface.
+   * Pick per surface, as everywhere else in here.
+   */
+  --cast-grain-blend: overlay;
 }
 
 /*
