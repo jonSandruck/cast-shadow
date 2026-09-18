@@ -258,15 +258,22 @@
    * near the scale of what it is hiding. Grain that fine averages out in
    * the eye and leaves the step edge perfectly visible — so the technique
    * was quietly weakest on exactly the displays people notice banding on.
+   *
+   * This is the only scale knob, and it is enough. Making the noise
+   * coarser by dropping feTurbulence's baseFrequency instead leaves the
+   * tile the same size while the features inside it grow, so there are
+   * fewer of them per tile and the repeat becomes obvious. Scaling the
+   * tile grows the features and the period together, which is why it is
+   * the one that works.
    */
 
   /* Grain strength and tile size in px. Grain exists to break up banding
      in the sheen — large soft gradients band badly on 8-bit displays.
      Set --cast-grain to 0, or --cast-grain-image to none, to drop it. */
-  /* Lower than room mode's: a card-sized gradient has far less room to
-     band across, so the grain is here for texture more than for dither. */
-  --cast-grain: 0.25;
-  --cast-grain-size: 140;
+  /* Same scale as room mode, so a card sitting inside a lit page reads as
+     the same material rather than a differently-finished patch of it. */
+  --cast-grain: 0.2;
+  --cast-grain-size: 280;
 
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
@@ -360,23 +367,17 @@
 
   /* Two ends again. On a pale page the pool does nothing and the vignette
      carries it; on a dark page the reverse. Tune by surface, not theme. */
-  --cast-room-light: rgb(255 255 255 / 0.1);
-  --cast-room-dark: rgb(0 0 0 / 0.16);
+  --cast-room-light: rgb(255 255 255 / 0.05);
+  --cast-room-dark: rgb(0 0 0 / 0.05);
 
   /* Higher than surface mode's, because a room-sized gradient bands far
      worse than a card-sized one. Measured on a 110px strip of page
-     Loud on purpose. Measured across a full 1280px viewport row with the
-     light in a corner — the longest ramp on the page — a dark page steps
-     every 284px with grain off, every 45px at 0.12, every 9px at 0.25 and
-     every 5px at 0.4, which is where the steps stop being findable. Light
-     behaves the same way one notch earlier.
-
-     Because the blend is luminance-preserving, this costs almost nothing
-     in tone: mean luminance moves about 4 levels going from 0 to 0.4. The
-     grain is plainly visible at this strength, and meant to be — it reads
-     as a blasted finish rather than as a defect. */
-  --cast-grain: 0.4;
-  --cast-grain-size: 140;
+     Tuned by eye on a retina display, which is the only way to settle
+     this — see the note on grain scale below. A shallower pool and
+     vignette also mean fewer quantisation steps to hide in the first
+     place, so less grain is needed than when the ramp was deeper. */
+  --cast-grain: 0.2;
+  --cast-grain-size: 280;
 
   /* Which layer the grain sits on. Below the content by default, which is
      where a surface texture belongs. */
@@ -501,9 +502,18 @@ body[data-cast~="room"]::before {
 :root {
   --cast-grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
 
-  /* overlay keeps the surface's own colour and moves only its luminance.
-     Plain alpha compositing drags everything toward grey as it gets
-     stronger, which is the usual reason loud grain looks like dirt. */
+  /*
+   * A blend rather than a film laid over the top: plain alpha compositing
+   * drags everything toward grey as it gets stronger, which is the usual
+   * reason loud grain looks like dirt.
+   *
+   * overlay and soft-light swap relative strength depending on how light
+   * the surface is. Measured noise amplitude on the demo page: on a light
+   * ground overlay gives 0.52 and soft-light 0.26; on a dark ground
+   * overlay gives 0.46 and soft-light 0.91. So soft-light is the gentler
+   * of the two on a light surface and the louder one on a dark surface.
+   * Pick per surface, as everywhere else in here.
+   */
   --cast-grain-blend: overlay;
 }
 

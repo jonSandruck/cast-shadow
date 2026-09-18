@@ -229,23 +229,40 @@ own properties position it directly with no arithmetic at all. Body also
 gets `box-shadow: none`, since a room is the space rather than an object
 floating above itself.
 
-**Grain matters more here than anywhere else, and it is loud on purpose.**
-A room-sized gradient bands badly. Measured across a full 1280px viewport
-row with the light in a corner — the longest ramp on the page — a dark page
-steps every 284px with grain off, every 45px at `0.12`, every 9px at `0.25`
-and every 5px at `0.4`, which is where the steps stop being findable.
+**Grain hides banding by camouflage, so scale matters more than strength.**
+A disrupting pattern hides an edge when it sits near the scale of that edge,
+and averages harmlessly away when it is much finer. Raising
+`--cast-grain-size` does more than raising `--cast-grain`.
 
-Because the grain blends rather than laying a film over the top, that costs
-almost nothing in tone: mean luminance moves about 4 levels between `0` and
-`0.4`. The grain is plainly visible at this strength and meant to be — a
-blasted finish rather than a defect.
+That is also why `--cast-grain-size` is the only scale knob, and why it is
+enough. Making the noise coarser by dropping `feTurbulence`'s
+`baseFrequency` instead leaves the tile the same size while the features
+inside it grow, so there are fewer of them per tile and the repeat becomes
+obvious. Scaling the tile grows the features and the period together.
 
-Two details make that possible. The noise tile is **opaque**, with its alpha
-channel forced to 1; `feTurbulence` leaves alpha varying along with colour,
-which makes the tile a translucent grey film that can only ever add light,
-so turning it up washes a dark page out instead of dithering it. And it
-composites through `--cast-grain-blend`, which keeps the surface's own
-colour and moves only its luminance.
+Grain is specified in CSS px and is the same at every device pixel ratio.
+An earlier version halved it above `2dppx` to keep each speckle one device
+pixel wide, which was backwards — it made the technique weakest on exactly
+the displays where banding is most visible. Per-pixel noise also picks up
+colour fringing from an RGB-stripe panel, a second reason to keep it coarse.
+
+One detail makes loud grain possible at all: the noise tile is **opaque**,
+with its alpha channel forced to 1. `feTurbulence` leaves alpha varying
+along with colour, which makes the tile a translucent grey film that can
+only ever add light, so turning it up washes a dark page out instead of
+dithering it.
+
+**Pick the blend per surface.** `overlay` and `soft-light` swap relative
+strength depending on how light the ground is. Measured noise amplitude:
+
+| | `overlay` | `soft-light` |
+| --- | --- | --- |
+| Light ground | 0.52 | 0.26 |
+| Dark ground | 0.46 | 0.91 |
+
+So `soft-light` is the gentler of the two on a light surface and the louder
+one on a dark surface. The demo takes `soft-light` in light mode and
+`overlay` in dark.
 
 **On `<body>` the grain sits above the content**, which is the second thing
 body needs a special case for. `mix-blend-mode` only blends within its own

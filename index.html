@@ -25,13 +25,6 @@
     --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    /* Noise at four feature sizes, for the tuner's detail control. Tile
-       size scales the whole pattern; this changes how big the speckles are
-       within it, which is the other half of how coarse the grain reads. */
-    --grain-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
-    --grain-medium: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
-    --grain-coarse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
-    --grain-chunky: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
   }
 
   @media (prefers-color-scheme: dark) {
@@ -52,6 +45,9 @@
       --cast-alpha-near: 0.62;
       --cast-alpha-far: 0.26;
       --cast-sheen: 0.07;
+      /* soft-light is the gentler blend on a light ground and the louder
+         one on a dark ground, so each theme takes the other. */
+      --cast-grain-blend: overlay;
     }
 
   }
@@ -72,10 +68,14 @@
     --cast-alpha-near: 0.62;
     --cast-alpha-far: 0.26;
     --cast-sheen: 0.07;
+    --cast-grain-blend: overlay;
   }
 
 
   /* ---- Base ---------------------------------------------------------- */
+
+  /* Light is the default ground here, and it wants the gentler blend. */
+  :root { --cast-grain-blend: soft-light; }
 
   * { box-sizing: border-box; }
 
@@ -596,22 +596,16 @@
   <div class="tuner-body" id="t-body">
   <h2>Grain</h2>
 
-  <label for="t-grain">strength <output id="t-grain-v">0.40</output></label>
-  <input type="range" id="t-grain" min="0" max="1" step="0.02" value="0.4">
+  <label for="t-grain">strength <output id="t-grain-v">0.20</output></label>
+  <input type="range" id="t-grain" min="0" max="1" step="0.02" value="0.2">
 
-  <label for="t-size">tile size <output id="t-size-v">140</output></label>
-  <input type="range" id="t-size" min="30" max="900" step="10" value="140">
+  <label for="t-size">tile size <output id="t-size-v">280</output></label>
+  <input type="range" id="t-size" min="30" max="900" step="10" value="280">
 
-  <label for="t-detail">detail</label>
-  <select id="t-detail">
-    <option value="fine">fine</option>
-    <option value="medium">medium</option>
-    <option value="coarse">coarse</option>
-    <option value="chunky">chunky</option>
-  </select>
 
   <label for="t-blend">blend</label>
   <select id="t-blend">
+    <option value="auto">auto (per theme)</option>
     <option value="overlay">overlay</option>
     <option value="soft-light">soft-light</option>
     <option value="hard-light">hard-light</option>
@@ -621,11 +615,11 @@
 
   <h2 style="margin-top:4px">Room</h2>
 
-  <label for="t-vig">vignette <output id="t-vig-v">0.16</output></label>
-  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.16">
+  <label for="t-vig">vignette <output id="t-vig-v">0.05</output></label>
+  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.05">
 
-  <label for="t-pool">pool <output id="t-pool-v">0.10</output></label>
-  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.1">
+  <label for="t-pool">pool <output id="t-pool-v">0.05</output></label>
+  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.05">
 
   <label class="check" for="t-strip">
     <input type="checkbox" id="t-strip">
@@ -703,15 +697,14 @@
   // library's own defaults, so Reset means "what a fresh page looks like",
   // not "whatever the markup happened to say".
   const TUNER_DEFAULTS = {
-    grain: '0.4', size: '140', blend: 'overlay', detail: 'fine',
-    vig: '0.16', pool: '0.1', strip: false,
+    grain: '0.2', size: '280', blend: 'auto',
+    vig: '0.05', pool: '0.05', strip: false,
   };
 
   const grainInput = document.getElementById('t-grain');
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
   const stripInput = document.getElementById('t-strip');
-  const detailInput = document.getElementById('t-detail');
   const vigInput = document.getElementById('t-vig');
   const poolInput = document.getElementById('t-pool');
 
@@ -728,23 +721,25 @@
     document.getElementById('t-vig-v').textContent = Number(vig).toFixed(2);
     document.getElementById('t-pool-v').textContent = Number(pool).toFixed(2);
 
+    // !important on purpose. The per-theme rules above are more specific
+    // than anything this can reasonably write, and a panel whose whole job
+    // is to override needs to actually win.
     sheet.textContent = `
       [data-cast~="room"], [data-cast~="surface"] {
-        --cast-grain: ${grain};
-        --cast-grain-size: ${size};
-        --cast-grain-blend: ${blend};
-        --cast-grain-image: var(--grain-${detailInput.value});
+        --cast-grain: ${grain} !important;
+        --cast-grain-size: ${size} !important;
+        ${blend === 'auto' ? '' : `--cast-grain-blend: ${blend} !important;`}
       }
       [data-cast~="room"] {
-        --cast-room-dark: rgb(0 0 0 / ${vig});
-        --cast-room-light: rgb(255 255 255 / ${pool});
+        --cast-room-dark: rgb(0 0 0 / ${vig}) !important;
+        --cast-room-light: rgb(255 255 255 / ${pool}) !important;
       }`;
 
     document.documentElement.classList.toggle('stripped', stripInput.checked);
 
     try {
       localStorage.setItem('cast-shadow-grain', JSON.stringify({
-        grain, size, blend, vig, pool, detail: detailInput.value,
+        grain, size, blend, vig, pool,
       }));
     } catch {}
   }
@@ -756,7 +751,6 @@
       grainInput.value = saved.grain ?? grainInput.value;
       sizeInput.value = saved.size ?? sizeInput.value;
       blendInput.value = saved.blend ?? blendInput.value;
-      detailInput.value = saved.detail ?? detailInput.value;
       vigInput.value = saved.vig ?? vigInput.value;
       poolInput.value = saved.pool ?? poolInput.value;
     }
@@ -764,7 +758,7 @@
 
   applyTuning();
 
-  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput, detailInput]) {
+  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput]) {
     el.addEventListener('input', applyTuning);
   }
 
@@ -772,7 +766,6 @@
     grainInput.value = TUNER_DEFAULTS.grain;
     sizeInput.value = TUNER_DEFAULTS.size;
     blendInput.value = TUNER_DEFAULTS.blend;
-    detailInput.value = TUNER_DEFAULTS.detail;
     vigInput.value = TUNER_DEFAULTS.vig;
     poolInput.value = TUNER_DEFAULTS.pool;
     stripInput.checked = TUNER_DEFAULTS.strip;
