@@ -196,8 +196,10 @@ element.
 | `--cast-room-reach` | `900` | Radius of the lit pool, in px |
 | `--cast-room-light` | `rgb(255 255 255 / 0.1)` | Colour of the pool |
 | `--cast-room-dark` | `rgb(0 0 0 / 0.16)` | Colour of the vignette |
-| `--cast-grain` | `0.12` | Grain opacity |
+| `--cast-grain` | `0.4` | Grain strength |
 | `--cast-grain-size` | `140` | Grain tile size, in px |
+| `--cast-grain-blend` | `overlay` | How the grain composites |
+| `--cast-grain-z` | `-1`, or `9999` on body | Which layer the grain sits on |
 
 **It never touches `background-image`.** The pool is drawn on a pseudo-element
 overlay, so it composites over whatever backgrounds the element already has
@@ -227,12 +229,32 @@ own properties position it directly with no arithmetic at all. Body also
 gets `box-shadow: none`, since a room is the space rather than an object
 floating above itself.
 
-**Grain matters more here than anywhere else.** A room-sized gradient bands
-far worse than a card-sized one. Measured across a 110px strip of page
-background: with grain off the value steps every 32px, at `0.05` every 12px,
-and at `0.12` every 4px, which is where it stops reading as banding. A dark
-page needs *less* — the same strip reaches 6px at `0.05` and gains nothing
-above it.
+**Grain matters more here than anywhere else, and it is loud on purpose.**
+A room-sized gradient bands badly. Measured across a full 1280px viewport
+row with the light in a corner — the longest ramp on the page — a dark page
+steps every 284px with grain off, every 45px at `0.12`, every 9px at `0.25`
+and every 5px at `0.4`, which is where the steps stop being findable.
+
+Because the grain blends rather than laying a film over the top, that costs
+almost nothing in tone: mean luminance moves about 4 levels between `0` and
+`0.4`. The grain is plainly visible at this strength and meant to be — a
+blasted finish rather than a defect.
+
+Two details make that possible. The noise tile is **opaque**, with its alpha
+channel forced to 1; `feTurbulence` leaves alpha varying along with colour,
+which makes the tile a translucent grey film that can only ever add light,
+so turning it up washes a dark page out instead of dithering it. And it
+composites through `--cast-grain-blend`, which keeps the surface's own
+colour and moves only its luminance.
+
+**On `<body>` the grain sits above the content**, which is the second thing
+body needs a special case for. `mix-blend-mode` only blends within its own
+stacking context, and a body background has already gone to the canvas,
+which is painted outside it — so an isolated grain layer has nothing to
+blend against and silently falls back to plain alpha. Measured on a dark
+page at grain `0.5`, that pushes mean luminance up 74 levels; lifting the
+layer out brings the drift to 6. Set `--cast-grain-z: -1` to put it back
+underneath, at the cost of that wash.
 
 Room mode uses both pseudo-elements, so it can't share an element with
 surface mode. Put room on the container and surface on the things inside it.
