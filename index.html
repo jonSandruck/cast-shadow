@@ -294,6 +294,93 @@
     max-width: 62ch;
   }
 
+  /* ---- Tuner ---------------------------------------------------------
+     Sits above the grain layer, which on this page rides at z-index 9999
+     so it can blend with the real backdrop. */
+
+  .tuner {
+    position: fixed;
+    left: 20px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    z-index: 10000;
+    width: 232px;
+    padding: 14px 16px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 34px rgb(0 0 0 / 0.22);
+    font-size: 12px;
+  }
+
+  .tuner h2 {
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .tuner label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--muted);
+  }
+
+  .tuner output, .tuner .val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tuner input[type="range"] {
+    width: 100%;
+    margin: 0 0 14px;
+    accent-color: var(--lamp);
+  }
+
+  .tuner select {
+    width: 100%;
+    margin-bottom: 12px;
+    font: inherit;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 5px 7px;
+  }
+
+  .tuner .check {
+    display: flex;
+    /* Without this it inherits space-between from .tuner label and the
+       box drifts to the far side of the row. */
+    justify-content: flex-start;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+
+  .tuner input:focus-visible, .tuner select:focus-visible {
+    outline: 2px solid var(--lamp);
+    outline-offset: 2px;
+  }
+
+  .stripped main, .stripped .bar, .stripped .hint { visibility: hidden; }
+
+  @media (max-width: 720px) {
+    .tuner { width: auto; right: 20px; }
+    .hint { display: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
 </style>
 </head>
@@ -454,6 +541,37 @@
   </footer>
 </main>
 
+<section class="tuner" id="tuner" aria-label="Grain controls">
+  <h2>Grain</h2>
+
+  <label for="t-grain">strength <output id="t-grain-v">0.40</output></label>
+  <input type="range" id="t-grain" min="0" max="1" step="0.02" value="0.4">
+
+  <label for="t-size">tile size <output id="t-size-v">140</output></label>
+  <input type="range" id="t-size" min="30" max="360" step="10" value="140">
+
+  <label for="t-blend">blend</label>
+  <select id="t-blend">
+    <option value="overlay">overlay</option>
+    <option value="soft-light">soft-light</option>
+    <option value="hard-light">hard-light</option>
+    <option value="normal">normal</option>
+  </select>
+
+  <h2 style="margin-top:4px">Room</h2>
+
+  <label for="t-vig">vignette <output id="t-vig-v">0.16</output></label>
+  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.16">
+
+  <label for="t-pool">pool <output id="t-pool-v">0.10</output></label>
+  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.1">
+
+  <label class="check" for="t-strip">
+    <input type="checkbox" id="t-strip">
+    hide content
+  </label>
+</section>
+
 <div class="lamp" aria-hidden="true"></div>
 <p class="hint">Click anywhere to move the light</p>
 
@@ -505,6 +623,79 @@
     try { localStorage.setItem('cast-shadow-theme', next); } catch {}
     labelToggle();
   });
+
+  // ---- Grain tuner -----------------------------------------------------
+  //
+  // --cast-grain is declared on the mode rules themselves, so it cannot be
+  // overridden from :root — an inherited value loses to a declaration on
+  // the element. This writes a rule of equal specificity at the end of the
+  // document instead, where source order settles it.
+
+  const tuner = document.getElementById('tuner');
+  const sheet = document.createElement('style');
+  document.body.appendChild(sheet);
+
+  const grainInput = document.getElementById('t-grain');
+  const sizeInput = document.getElementById('t-size');
+  const blendInput = document.getElementById('t-blend');
+  const stripInput = document.getElementById('t-strip');
+  const vigInput = document.getElementById('t-vig');
+  const poolInput = document.getElementById('t-pool');
+
+  function applyTuning() {
+    const grain = grainInput.value;
+    const size = sizeInput.value;
+    const blend = blendInput.value;
+
+    const vig = vigInput.value;
+    const pool = poolInput.value;
+
+    document.getElementById('t-grain-v').textContent = Number(grain).toFixed(2);
+    document.getElementById('t-size-v').textContent = size;
+    document.getElementById('t-vig-v').textContent = Number(vig).toFixed(2);
+    document.getElementById('t-pool-v').textContent = Number(pool).toFixed(2);
+
+    sheet.textContent = `
+      [data-cast~="room"], [data-cast~="surface"] {
+        --cast-grain: ${grain};
+        --cast-grain-size: ${size};
+        --cast-grain-blend: ${blend};
+      }
+      [data-cast~="room"] {
+        --cast-room-dark: rgb(0 0 0 / ${vig});
+        --cast-room-light: rgb(255 255 255 / ${pool});
+      }`;
+
+    document.documentElement.classList.toggle('stripped', stripInput.checked);
+
+    try {
+      localStorage.setItem('cast-shadow-grain', JSON.stringify({ grain, size, blend, vig, pool }));
+    } catch {}
+  }
+
+  // Site data can be blocked or throw outright, so never let it break boot.
+  try {
+    const saved = JSON.parse(localStorage.getItem('cast-shadow-grain') || 'null');
+    if (saved) {
+      grainInput.value = saved.grain ?? grainInput.value;
+      sizeInput.value = saved.size ?? sizeInput.value;
+      blendInput.value = saved.blend ?? blendInput.value;
+      vigInput.value = saved.vig ?? vigInput.value;
+      poolInput.value = saved.pool ?? poolInput.value;
+    }
+  } catch {}
+
+  applyTuning();
+
+  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput]) {
+    el.addEventListener('input', applyTuning);
+  }
+
+  // Every control here would otherwise double as a click on the page,
+  // yanking the light into the corner on each adjustment.
+  for (const type of ['click', 'pointerdown']) {
+    tuner.addEventListener(type, (event) => event.stopPropagation());
+  }
 </script>
 
 </body>
