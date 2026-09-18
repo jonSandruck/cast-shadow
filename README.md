@@ -133,17 +133,39 @@ from it.
 | Property | Default | What it does |
 | --- | --- | --- |
 | `--cast-edge-width` | `1` | Rim width, in px |
-| `--cast-edge-light` | `0.55` | Lit rim strength |
-| `--cast-edge-dark` | `0.22` | Shaded rim strength |
+| `--cast-edge-lit` | `rgb(255 255 255 / 0.3)` | Colour of the lit rim |
+| `--cast-edge-shade` | `rgb(0 0 0 / 0.34)` | Colour of the shaded rim |
 
 Two inset shadows reusing the same vector, composed into the same
 `box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
 layers have to be declared in one place. It is the cheapest thing in the
 library and does more for the illusion than anything else in it.
 
-The same headroom rule applies as surface mode. Measured on the demo's pale
-tile, the lit rim moves the surface 1.6 levels while the shaded rim moves it
-41.7. On a dark panel it inverts.
+The offset is divided by the vector's larger component, so the rim sits at
+exactly `--cast-edge-width` on its dominant edge at every angle. Scaling
+the raw unit vector instead would leave only 0.707px at 45°, which
+antialiasing dilutes by about a third — and the rim then visibly pulses as
+the light swings around. Measured across eight light positions, strength
+now varies by 0%.
+
+Both are full colours rather than bare alphas, so a warm lamp can give a
+warm rim:
+
+```css
+--cast-edge-lit: rgb(255 240 205 / 0.34);
+```
+
+The same headroom rule applies as surface mode, and the defaults are
+balanced by measurement rather than by eye. On the demo's pale tile the
+shaded rim lands at 22.7 ΔL\*; on its dark tile the lit rim lands at 22.6.
+Each surface leans on whichever end has room and the other costs nothing,
+so one pair of values holds up in both themes.
+
+**On a near-white panel you cannot have a highlight.** White over `#fcfbf9`
+moves it 0.2 ΔL\*. That is not a tuning failure, it is the display: there
+is nothing above white. Light-mode form comes from the shaded side, which
+is also how a real white object looks. If you want a visible lit rim, the
+panel has to come off pure white first.
 
 **Unlike the shadow and the sheen, the rim does not fade with distance.**
 That's deliberate: those are broad soft areas where falloff reads as light,
@@ -291,9 +313,6 @@ ordinary, tasteful shadow. The script only makes it directional.
   element. There's no occlusion and nothing catches a shadow cast by a
   neighbour. This is a lighting *effect*, not a renderer.
 - **One light.** Two objects can't be lit from different directions.
-- **Rims thin on the diagonal.** The offset is a unit vector scaled by the
-  rim width, so a rim sits a full `--cast-edge-width` on axis and about
-  0.7 of it at 45°. Invisible at the 1px default.
 
 ## Browser support
 
