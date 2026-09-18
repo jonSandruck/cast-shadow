@@ -322,6 +322,44 @@
     color: var(--muted);
   }
 
+  .tuner-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .tuner-head h2 { margin: 0; }
+
+  .tuner.collapsed { width: auto; padding: 10px 12px; }
+
+  .tuner button {
+    font: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+
+  .tuner button:hover { border-color: var(--muted); }
+
+  .tuner button:focus-visible {
+    outline: 2px solid var(--lamp);
+    outline-offset: 2px;
+  }
+
+  .tuner .reset {
+    width: 100%;
+    margin-top: 14px;
+    padding: 7px;
+  }
+
+  .tuner-body { margin-top: 12px; }
+
   .tuner label {
     display: flex;
     justify-content: space-between;
@@ -541,7 +579,13 @@
   </footer>
 </main>
 
-<section class="tuner" id="tuner" aria-label="Grain controls">
+<section class="tuner" id="tuner" aria-label="Lighting controls">
+  <div class="tuner-head">
+    <h2>Tuner</h2>
+    <button type="button" id="t-collapse" aria-expanded="true" aria-controls="t-body">Hide</button>
+  </div>
+
+  <div class="tuner-body" id="t-body">
   <h2>Grain</h2>
 
   <label for="t-grain">strength <output id="t-grain-v">0.40</output></label>
@@ -570,6 +614,9 @@
     <input type="checkbox" id="t-strip">
     hide content
   </label>
+
+  <button type="button" class="reset" id="t-reset">Reset to defaults</button>
+  </div>
 </section>
 
 <div class="lamp" aria-hidden="true"></div>
@@ -635,6 +682,14 @@
   const sheet = document.createElement('style');
   document.body.appendChild(sheet);
 
+  // One source of truth for what Reset returns to. These mirror the
+  // library's own defaults, so Reset means "what a fresh page looks like",
+  // not "whatever the markup happened to say".
+  const TUNER_DEFAULTS = {
+    grain: '0.4', size: '140', blend: 'overlay',
+    vig: '0.16', pool: '0.1', strip: false,
+  };
+
   const grainInput = document.getElementById('t-grain');
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
@@ -690,6 +745,36 @@
   for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput]) {
     el.addEventListener('input', applyTuning);
   }
+
+  document.getElementById('t-reset').addEventListener('click', () => {
+    grainInput.value = TUNER_DEFAULTS.grain;
+    sizeInput.value = TUNER_DEFAULTS.size;
+    blendInput.value = TUNER_DEFAULTS.blend;
+    vigInput.value = TUNER_DEFAULTS.vig;
+    poolInput.value = TUNER_DEFAULTS.pool;
+    stripInput.checked = TUNER_DEFAULTS.strip;
+    applyTuning();
+    try { localStorage.removeItem('cast-shadow-grain'); } catch {}
+  });
+
+  // ---- Collapse --------------------------------------------------------
+
+  const collapseButton = document.getElementById('t-collapse');
+  const tunerBody = document.getElementById('t-body');
+
+  function setCollapsed(collapsed) {
+    tuner.classList.toggle('collapsed', collapsed);
+    tunerBody.hidden = collapsed;
+    collapseButton.textContent = collapsed ? 'Tune' : 'Hide';
+    collapseButton.setAttribute('aria-expanded', String(!collapsed));
+    try { localStorage.setItem('cast-shadow-tuner-collapsed', collapsed ? '1' : '0'); } catch {}
+  }
+
+  let startCollapsed = false;
+  try { startCollapsed = localStorage.getItem('cast-shadow-tuner-collapsed') === '1'; } catch {}
+  setCollapsed(startCollapsed);
+
+  collapseButton.addEventListener('click', () => setCollapsed(!tuner.classList.contains('collapsed')));
 
   // Every control here would otherwise double as a click on the page,
   // yanking the light into the corner on each adjustment.
