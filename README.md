@@ -121,6 +121,65 @@ ambient fill, and without it distant shadows read as tar.
 The clamp matters because the projection is honest: as `h` approaches `H`,
 the offset runs to infinity. Correct, but not useful.
 
+## Edge mode
+
+A hairline rim: lit on the side facing the light, shaded on the side away
+from it.
+
+```html
+<div class="panel" data-cast="edge">…</div>
+```
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `--cast-edge-width` | `1` | Rim width, in px |
+| `--cast-edge-lit` | `rgb(255 255 255 / 0.3)` | Colour of the lit rim |
+| `--cast-edge-shade` | `rgb(0 0 0 / 0.34)` | Colour of the shaded rim |
+
+Two inset shadows reusing the same vector, composed into the same
+`box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
+layers have to be declared in one place. It is the cheapest thing in the
+library and does more for the illusion than anything else in it.
+
+The offset is divided by the vector's larger component, so the rim sits at
+exactly `--cast-edge-width` on its dominant edge at every angle. Scaling
+the raw unit vector instead would leave only 0.707px at 45°, which
+antialiasing dilutes by about a third — and the rim then visibly pulses as
+the light swings around. Measured across eight light positions, strength
+now varies by 0%.
+
+Both are full colours rather than bare alphas, so a warm lamp can give a
+warm rim:
+
+```css
+--cast-edge-lit: rgb(255 240 205 / 0.34);
+```
+
+The same headroom rule applies as surface mode, and the defaults are
+balanced by measurement rather than by eye. On the demo's pale tile the
+shaded rim lands at 22.7 ΔL\*; on its dark tile the lit rim lands at 22.6.
+Each surface leans on whichever end has room and the other costs nothing,
+so one pair of values holds up in both themes.
+
+**On a near-white panel you cannot have a highlight.** White over `#fcfbf9`
+moves it 0.2 ΔL\*. That is not a tuning failure, it is the display: there
+is nothing above white. Light-mode form comes from the shaded side, which
+is also how a real white object looks. If you want a visible lit rim, the
+panel has to come off pure white first.
+
+**Unlike the shadow and the sheen, the rim does not fade with distance.**
+That's deliberate: those are broad soft areas where falloff reads as light,
+but a hairline crossing a fade threshold reads as flicker. Multiply by
+`(1 - var(--cast-t))` yourself if you want it to fall off.
+
+**Two notes:**
+
+- A border sits outside the inset rim and competes with it. Edge mode reads
+  best on an element with no border.
+- It doesn't combine with shape mode — `inset` follows the border box, not
+  the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
+  and surface do combine, and that pairing is the strongest look here.
+
 ## Surface mode
 
 `box-shadow` only ever describes the space *behind* an object. Surface mode
