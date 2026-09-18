@@ -130,9 +130,48 @@
 
   /* ---- Output -------------------------------------------------------- */
 
-  box-shadow:
+  /* Named so edge mode can put rims in front of it. box-shadow is not
+     additive — a second declaration replaces the first — so the layers
+     have to be composed in one place. */
+  --cast-drop:
     var(--cast-x) var(--cast-y) var(--cast-blur)
     rgb(var(--cast-color) / var(--cast-alpha));
+
+  box-shadow: var(--cast-drop);
+}
+
+/*
+ * Edge mode. A hairline rim: lit on the side facing the light, shaded on
+ * the side away from it. This is the cheapest thing in the library and
+ * the one that most makes an object look like it has a real edge.
+ *
+ * An inset shadow offset by (x, y) leaves the opposite strip uncovered, so
+ * the band appears on the MINUS side of the offset. Offsetting along the
+ * shadow vector therefore lands the bright rim on the edge facing the
+ * light, which is what we want.
+ *
+ * The two strengths follow the same headroom rule as surface mode: on a
+ * pale object the dark rim does nearly all the work, on a dark object the
+ * light one does. Tune by surface, not by theme.
+ */
+[data-cast~="edge"] {
+  --cast-edge-width: 1;
+  --cast-edge-light: 0.55;
+  --cast-edge-dark: 0.22;
+
+  --cast-edge-x: calc(var(--cast-ux) * var(--cast-edge-width) * 1px);
+  --cast-edge-y: calc(var(--cast-uy) * var(--cast-edge-width) * 1px);
+
+  /* Deliberately not faded by distance, unlike the shadow and the sheen.
+     Those are broad soft areas where falloff reads as light; a hairline
+     crossing a fade threshold reads as flicker. Multiply by
+     (1 - var(--cast-t)) yourself if you want it to fall off. */
+  box-shadow:
+    inset var(--cast-edge-x) var(--cast-edge-y) 0
+      rgb(255 255 255 / var(--cast-edge-light)),
+    inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
+      rgb(0 0 0 / var(--cast-edge-dark)),
+    var(--cast-drop);
 }
 
 /*

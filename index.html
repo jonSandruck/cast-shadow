@@ -214,6 +214,10 @@
     color: var(--muted);
   }
 
+  /* A border sits outside the inset rim and competes with it, so edge
+     mode reads best on a tile that has none. */
+  .tile.bare { border: 0; }
+
   .chip {
     width: 96px; height: 96px;
     border-radius: 50%;
@@ -356,6 +360,28 @@
     <figure>
       <div class="tile" data-cast="surface" style="--cast-elevation: 40"></div>
       <figcaption>Shadow, modelling and grain.</figcaption>
+    </figure>
+  </div>
+
+  <p class="eyebrow">Edge highlight</p>
+  <p class="note">
+    <code>data-cast="edge"</code> adds a hairline rim: lit on the side
+    facing the light, shaded on the side away from it. One inset shadow
+    each way, reusing the same vector. It costs almost nothing and does
+    more for the illusion than anything else here.
+  </p>
+  <div class="pair">
+    <figure>
+      <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
+      <figcaption>Shadow only.</figcaption>
+    </figure>
+    <figure>
+      <div class="tile bare" data-cast="edge" style="--cast-elevation: 40"></div>
+      <figcaption><code>edge</code>. Watch the rim swap sides as you move the light.</figcaption>
+    </figure>
+    <figure>
+      <div class="tile bare" data-cast="surface edge" style="--cast-elevation: 40"></div>
+      <figcaption><code>surface edge</code>. Modelled face and rim together.</figcaption>
     </figure>
   </div>
 

@@ -121,6 +121,43 @@ ambient fill, and without it distant shadows read as tar.
 The clamp matters because the projection is honest: as `h` approaches `H`,
 the offset runs to infinity. Correct, but not useful.
 
+## Edge mode
+
+A hairline rim: lit on the side facing the light, shaded on the side away
+from it.
+
+```html
+<div class="panel" data-cast="edge">…</div>
+```
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `--cast-edge-width` | `1` | Rim width, in px |
+| `--cast-edge-light` | `0.55` | Lit rim strength |
+| `--cast-edge-dark` | `0.22` | Shaded rim strength |
+
+Two inset shadows reusing the same vector, composed into the same
+`box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
+layers have to be declared in one place. It is the cheapest thing in the
+library and does more for the illusion than anything else in it.
+
+The same headroom rule applies as surface mode. Measured on the demo's pale
+tile, the lit rim moves the surface 1.6 levels while the shaded rim moves it
+41.7. On a dark panel it inverts.
+
+**Unlike the shadow and the sheen, the rim does not fade with distance.**
+That's deliberate: those are broad soft areas where falloff reads as light,
+but a hairline crossing a fade threshold reads as flicker. Multiply by
+`(1 - var(--cast-t))` yourself if you want it to fall off.
+
+**Two notes:**
+
+- A border sits outside the inset rim and competes with it. Edge mode reads
+  best on an element with no border.
+- It doesn't combine with shape mode — `inset` follows the border box, not
+  the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
+  and surface do combine, and that pairing is the strongest look here.
+
 ## Surface mode
 
 `box-shadow` only ever describes the space *behind* an object. Surface mode
@@ -254,6 +291,9 @@ ordinary, tasteful shadow. The script only makes it directional.
   element. There's no occlusion and nothing catches a shadow cast by a
   neighbour. This is a lighting *effect*, not a renderer.
 - **One light.** Two objects can't be lit from different directions.
+- **Rims thin on the diagonal.** The offset is a unit vector scaled by the
+  rim width, so a rim sits a full `--cast-edge-width` on axis and about
+  0.7 of it at 45°. Invisible at the 1px default.
 
 ## Browser support
 
