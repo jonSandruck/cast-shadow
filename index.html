@@ -204,12 +204,25 @@
     box-shadow: 0 0 26px 9px rgb(var(--lamp-glow) / 0.7), 0 0 76px 34px rgb(var(--lamp-glow) / 0.3);
     pointer-events: none; z-index: 40;
   }
+  .lamp-hidden .lamp { display: none; }
   .hint {
     position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%); z-index: 40; margin: 0;
+    display: flex; align-items: center; gap: 11px;
     background: var(--ink); color: var(--ground); font-size: 13px; font-weight: 500;
-    padding: 9px 17px; border-radius: 999px; pointer-events: none; white-space: nowrap;
+    padding: 8px 8px 8px 17px; border-radius: 999px;
+    pointer-events: none; white-space: nowrap;
   }
+  /* The pill stays click-through so it never swallows a click meant for
+     the light. A descendant can re-enable pointer events, so the button
+     alone is clickable. */
+  .hint button {
+    pointer-events: auto; font: inherit; font-size: 12px; font-weight: 550;
+    color: var(--ink); background: var(--ground); border: 0;
+    border-radius: 999px; padding: 4px 11px; cursor: pointer;
+  }
+  .hint button:hover { background: var(--surface); }
+  .hint button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
 
   /* ---- Tuner --------------------------------------------------------- */
@@ -940,7 +953,10 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 </section>
 
 <div class="lamp" aria-hidden="true"></div>
-<p class="hint">Click anywhere to move the light</p>
+<p class="hint">
+  <span>Click anywhere to move the light</span>
+  <button type="button" id="lamp-toggle" aria-pressed="false">Hide dot</button>
+</p>
 
 <script type="module">
   import { castShadow } from './cast-shadow.js';
@@ -954,6 +970,30 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     root.style.setProperty('--cast-light-x', `${(event.clientX / window.innerWidth) * 100}%`);
     root.style.setProperty('--cast-light-y', `${(event.clientY / window.innerHeight) * 100}%`);
     shadows.refresh();
+  });
+
+  // ---- Lamp dot --------------------------------------------------------
+  //
+  // Hides the indicator only. The light keeps its position, so every
+  // shadow, sheen, rim and the room pool carry on exactly as before --
+  // which is the point: it lets you look at the lighting without the
+  // marker telling you where to look.
+
+  const lampToggle = document.getElementById('lamp-toggle');
+
+  function setLampHidden(hidden) {
+    root.classList.toggle('lamp-hidden', hidden);
+    lampToggle.textContent = hidden ? 'Show dot' : 'Hide dot';
+    lampToggle.setAttribute('aria-pressed', String(hidden));
+    try { localStorage.setItem('cast-shadow-lamp-hidden', hidden ? '1' : '0'); } catch {}
+  }
+
+  let lampHidden = false;
+  try { lampHidden = localStorage.getItem('cast-shadow-lamp-hidden') === '1'; } catch {}
+  setLampHidden(lampHidden);
+
+  lampToggle.addEventListener('click', () => {
+    setLampHidden(!root.classList.contains('lamp-hidden'));
   });
 
   // ---- Theme toggle ----------------------------------------------------
