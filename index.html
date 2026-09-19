@@ -204,31 +204,42 @@
     box-shadow: 0 0 26px 9px rgb(var(--lamp-glow) / 0.7), 0 0 76px 34px rgb(var(--lamp-glow) / 0.3);
     pointer-events: none; z-index: 40;
   }
-  .hint {
-    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%); z-index: 40; margin: 0;
-    background: var(--ink); color: var(--ground); font-size: 13px; font-weight: 500;
-    padding: 9px 17px; border-radius: 999px; pointer-events: none; white-space: nowrap;
-  }
-  @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
+  .lamp-hidden .lamp { display: none; }
 
   /* ---- Tuner --------------------------------------------------------- */
+  /*
+   * One panel, not a panel plus a pill. Collapsed it is the hint: the
+   * instruction and the two buttons on one row. Expanded it grows the
+   * controls downward from that same row, so the buttons never move.
+   *
+   * Width comes from the header, which is wider than the old 232px
+   * tuner. That is fine -- longer slider tracks are easier to aim.
+   */
   .tuner {
-    position: fixed; left: 20px; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-    z-index: 50; width: 232px; padding: 14px 16px 16px; border-radius: 14px;
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; max-width: calc(100vw - 40px);
+    padding: 10px 10px 12px; border-radius: 18px;
     border: 1px solid var(--line);
     background: color-mix(in srgb, var(--surface) 92%, transparent);
     backdrop-filter: blur(14px); box-shadow: 0 10px 34px rgb(0 0 0 / 0.22); font-size: 12px;
   }
   .tuner h2 { margin: 0 0 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
-  .tuner-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .tuner-head { display: flex; align-items: center; gap: 10px; }
   .tuner-head h2 { margin: 0; }
-  .tuner.collapsed { width: auto; padding: 10px 12px; }
+  .tuner-hint {
+    margin: 0 auto 0 0; padding-left: 7px; font-size: 13px; font-weight: 500;
+    color: var(--ink); white-space: nowrap;
+  }
+  /* Collapsed it should read as a pill, so the radius matches the row. */
+  .tuner.collapsed { border-radius: 999px; padding: 10px; }
   .tuner label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; color: var(--muted); }
   .tuner output { font-family: var(--mono); font-size: 11px; color: var(--ink); font-variant-numeric: tabular-nums; }
   .tuner input[type="range"] { width: 100%; margin: 0 0 14px; accent-color: var(--lamp); }
+  /* A select's min-content comes from its longest option, which would
+     widen the panel when it opens. The header decides the width. */
   .tuner select {
-    width: 100%; margin-bottom: 12px; font: inherit; font-family: var(--mono); font-size: 11px;
+    width: 100%; min-width: 0; margin-bottom: 12px; font: inherit; font-family: var(--mono); font-size: 11px;
     color: var(--ink); background: var(--ground); border: 1px solid var(--line);
     border-radius: 7px; padding: 5px 7px;
   }
@@ -237,13 +248,31 @@
     background: var(--ground); border: 1px solid var(--line); border-radius: 7px;
     padding: 4px 10px; cursor: pointer;
   }
+  .tuner-head button { font-size: 12px; border-radius: 999px; padding: 5px 13px; }
   .tuner button:hover { border-color: var(--muted); }
   .tuner button:focus-visible, .tuner input:focus-visible, .tuner select:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   .tuner .reset { width: 100%; margin-top: 14px; padding: 7px; }
-  .tuner .check { display: flex; justify-content: flex-start; align-items: center; gap: 7px; color: var(--muted); cursor: pointer; margin-bottom: 0; }
-  .tuner-body { margin-top: 12px; }
-  .stripped main, .stripped .bar, .stripped .hint { visibility: hidden; }
-  @media (max-width: 820px) { .tuner { width: auto; right: 20px; } .hint { display: none; } }
+  @media (max-width: 560px) { .tuner-body { grid-template-columns: 1fr; } }
+  .tuner .check { display: flex; justify-content: flex-start; align-items: center; gap: 7px; color: var(--muted); cursor: pointer; margin: 4px 0 0; }
+  .tuner-body {
+    margin-top: 12px; padding: 12px 6px 0;
+    border-top: 1px solid var(--line);
+    /* minmax(0, 1fr), not 1fr: a bare 1fr floors at min-content, so the
+       widest control would set the panel's width and it would jump wider
+       on open. The header row decides the width. */
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 20px;
+  }
+  /* display: grid outranks the UA's [hidden] { display: none }, so the
+     collapsed panel would stay open without this. */
+  .tuner-body[hidden] { display: none; }
+  /* The reset button sits at the foot of its column whatever the other
+     column's height, so the two always end level. */
+  .tuner-col { display: flex; flex-direction: column; }
+  .tuner-col .reset { margin-top: auto; }
+  .stripped main, .stripped .bar { visibility: hidden; }
+  /* The instruction is the first thing to go when room runs out -- the
+     buttons are the part you cannot reach any other way. */
+  @media (max-width: 560px) { .tuner-hint { display: none; } }
 </style>
 </head>
 <body data-cast="room">
@@ -882,11 +911,13 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 </main>
 <section class="tuner" id="tuner" aria-label="Lighting controls">
   <div class="tuner-head">
-    <h2>Tuner</h2>
-    <button type="button" id="t-collapse" aria-expanded="true" aria-controls="t-body">Hide</button>
+    <p class="tuner-hint">Click the page to move the light</p>
+    <button type="button" id="lamp-toggle" aria-pressed="false">Hide dot</button>
+    <button type="button" id="t-collapse" aria-expanded="false" aria-controls="t-body">Tune</button>
   </div>
 
   <div class="tuner-body" id="t-body">
+  <div class="tuner-col">
   <h2>Light</h2>
 
   <label for="t-temp">colour</label>
@@ -904,6 +935,23 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     <option value="12000">12000K &middot; blue sky</option>
   </select>
 
+  <label for="t-lz">height <output id="t-lz-v">600</output></label>
+  <input type="range" id="t-lz" min="200" max="1600" step="20" value="600">
+
+  <label for="t-lsize">size <output id="t-lsize-v">350</output></label>
+  <input type="range" id="t-lsize" min="20" max="1200" step="10" value="350">
+
+  <h2>Room</h2>
+
+  <label for="t-vig">vignette <output id="t-vig-v">0.05</output></label>
+  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.05">
+
+  <label for="t-pool">pool <output id="t-pool-v">0.05</output></label>
+  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.05">
+
+  </div>
+
+  <div class="tuner-col">
   <h2>Grain</h2>
 
   <label for="t-grain">strength <output id="t-grain-v">0.20</output></label>
@@ -922,14 +970,6 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     <option value="normal">normal</option>
   </select>
 
-  <h2>Room</h2>
-
-  <label for="t-vig">vignette <output id="t-vig-v">0.05</output></label>
-  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.05">
-
-  <label for="t-pool">pool <output id="t-pool-v">0.05</output></label>
-  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.05">
-
   <label class="check" for="t-strip">
     <input type="checkbox" id="t-strip">
     hide content
@@ -937,10 +977,10 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   <button type="button" class="reset" id="t-reset">Reset to defaults</button>
   </div>
+  </div>
 </section>
 
 <div class="lamp" aria-hidden="true"></div>
-<p class="hint">Click anywhere to move the light</p>
 
 <script type="module">
   import { castShadow } from './cast-shadow.js';
@@ -950,10 +990,34 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   document.addEventListener('click', (event) => {
     // Links and controls should do their own job, not move the light.
-    if (event.target.closest('a, button, input, select, label, pre')) return;
+    if (event.target.closest('a, button, input, select, label, pre, #tuner')) return;
     root.style.setProperty('--cast-light-x', `${(event.clientX / window.innerWidth) * 100}%`);
     root.style.setProperty('--cast-light-y', `${(event.clientY / window.innerHeight) * 100}%`);
     shadows.refresh();
+  });
+
+  // ---- Lamp dot --------------------------------------------------------
+  //
+  // Hides the indicator only. The light keeps its position, so every
+  // shadow, sheen, rim and the room pool carry on exactly as before --
+  // which is the point: it lets you look at the lighting without the
+  // marker telling you where to look.
+
+  const lampToggle = document.getElementById('lamp-toggle');
+
+  function setLampHidden(hidden) {
+    root.classList.toggle('lamp-hidden', hidden);
+    lampToggle.textContent = hidden ? 'Show dot' : 'Hide dot';
+    lampToggle.setAttribute('aria-pressed', String(hidden));
+    try { localStorage.setItem('cast-shadow-lamp-hidden', hidden ? '1' : '0'); } catch {}
+  }
+
+  let lampHidden = false;
+  try { lampHidden = localStorage.getItem('cast-shadow-lamp-hidden') === '1'; } catch {}
+  setLampHidden(lampHidden);
+
+  lampToggle.addEventListener('click', () => {
+    setLampHidden(!root.classList.contains('lamp-hidden'));
   });
 
   // ---- Theme toggle ----------------------------------------------------
@@ -995,7 +1059,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   // the element. This writes a rule at the end of the document instead.
 
   const TUNER_DEFAULTS = {
-    temp: '6500', grain: '0.2', size: '280', blend: 'auto',
+    temp: '6500', lz: '600', lsize: '350',
+    grain: '0.2', size: '280', blend: 'auto',
     vig: '0.05', pool: '0.05', strip: false,
   };
 
@@ -1004,6 +1069,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   document.body.appendChild(sheet);
 
   const tempInput = document.getElementById('t-temp');
+  const lzInput = document.getElementById('t-lz');
+  const lsizeInput = document.getElementById('t-lsize');
   const grainInput = document.getElementById('t-grain');
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
@@ -1014,7 +1081,10 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   function applyTuning() {
     const grain = grainInput.value, size = sizeInput.value, blend = blendInput.value;
     const vig = vigInput.value, pool = poolInput.value;
+    const lz = lzInput.value, lsize = lsizeInput.value;
 
+    document.getElementById('t-lz-v').textContent = lz;
+    document.getElementById('t-lsize-v').textContent = lsize;
     document.getElementById('t-grain-v').textContent = Number(grain).toFixed(2);
     document.getElementById('t-size-v').textContent = size;
     document.getElementById('t-vig-v').textContent = Number(vig).toFixed(2);
@@ -1024,7 +1094,11 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     // anything this can reasonably write, and a panel whose whole job is
     // to override needs to win.
     sheet.textContent = `
-      :root { --cast-light-color: var(--cast-${tempInput.value}k); }
+      :root {
+        --cast-light-color: var(--cast-${tempInput.value}k);
+        --cast-light-z: ${lz};
+        --cast-light-size: ${lsize};
+      }
       [data-cast~="room"], [data-cast~="surface"] {
         --cast-grain: ${grain} !important;
         --cast-grain-size: ${size} !important;
@@ -1039,7 +1113,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
     try {
       localStorage.setItem('cast-shadow-tuner', JSON.stringify({
-        temp: tempInput.value, grain, size, blend, vig, pool,
+        temp: tempInput.value, lz, lsize, grain, size, blend, vig, pool,
       }));
     } catch {}
   }
@@ -1048,6 +1122,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     const saved = JSON.parse(localStorage.getItem('cast-shadow-tuner') || 'null');
     if (saved) {
       tempInput.value = saved.temp ?? tempInput.value;
+      lzInput.value = saved.lz ?? lzInput.value;
+      lsizeInput.value = saved.lsize ?? lsizeInput.value;
       grainInput.value = saved.grain ?? grainInput.value;
       sizeInput.value = saved.size ?? sizeInput.value;
       blendInput.value = saved.blend ?? blendInput.value;
@@ -1058,12 +1134,15 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   applyTuning();
 
-  for (const el of [tempInput, grainInput, sizeInput, blendInput, vigInput, poolInput, stripInput]) {
+  for (const el of [tempInput, lzInput, lsizeInput, grainInput, sizeInput,
+                   blendInput, vigInput, poolInput, stripInput]) {
     el.addEventListener('input', applyTuning);
   }
 
   document.getElementById('t-reset').addEventListener('click', () => {
     tempInput.value = TUNER_DEFAULTS.temp;
+    lzInput.value = TUNER_DEFAULTS.lz;
+    lsizeInput.value = TUNER_DEFAULTS.lsize;
     grainInput.value = TUNER_DEFAULTS.grain;
     sizeInput.value = TUNER_DEFAULTS.size;
     blendInput.value = TUNER_DEFAULTS.blend;
@@ -1080,13 +1159,16 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   function setCollapsed(collapsed) {
     tuner.classList.toggle('collapsed', collapsed);
     tunerBody.hidden = collapsed;
-    collapseButton.textContent = collapsed ? 'Tune' : 'Hide';
+    collapseButton.textContent = collapsed ? 'Tune' : 'Close';
     collapseButton.setAttribute('aria-expanded', String(!collapsed));
     try { localStorage.setItem('cast-shadow-tuner-collapsed', collapsed ? '1' : '0'); } catch {}
   }
 
-  let startCollapsed = false;
-  try { startCollapsed = localStorage.getItem('cast-shadow-tuner-collapsed') === '1'; } catch {}
+  // Collapsed is the hint pill, so that is what the page should open on.
+  // Only an explicit '0' in storage means someone opened the controls and
+  // wants them to stay open.
+  let startCollapsed = true;
+  try { startCollapsed = localStorage.getItem('cast-shadow-tuner-collapsed') !== '0'; } catch {}
   setCollapsed(startCollapsed);
 
   collapseButton.addEventListener('click', () => setCollapsed(!tuner.classList.contains('collapsed')));
