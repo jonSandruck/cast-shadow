@@ -194,8 +194,9 @@ from it.
 
 Two inset shadows reusing the same vector, composed into the same
 `box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
-layers have to be declared in one place. It is the cheapest thing in the
-library and does more for the illusion than anything else in it.
+layers have to be declared in one place. On its own it adds no element and
+no stacking context, which makes it the cheapest thing in the library, and
+it does more for the illusion than anything else in it.
 
 The offset is divided by the vector's larger component, so the rim sits at
 exactly `--cast-edge-width` on its dominant edge at every angle. Scaling
@@ -227,6 +228,30 @@ panel has to come off pure white first.
 That's deliberate: those are broad soft areas where falloff reads as light,
 but a hairline crossing a fade threshold reads as flicker. Multiply by
 `(1 - var(--cast-t))` yourself if you want it to fall off.
+
+**An opaque child hides the rim.** An inset shadow paints above the
+element's background but *below* its content, and there is no `z-index` for
+it, because it isn't a layer. On a card with a full-bleed photo the rim
+measured 1-3 levels of luminance, which is nothing.
+
+Adding `surface` fixes it. When both modes are on, the rim is drawn on
+surface mode's `::before` instead, so it rides `--cast-surface-z` along
+with the sheen — under the content by default, over the photo when lifted.
+Measured on the same cards: 1-3 levels before, 23-68 lifted. At the default
+`--cast-surface-z: -1` it paints in exactly the same place as the
+element-level rim, so nothing changes for a card whose own background
+shows.
+
+If you want a lifted rim and no sheen, add `surface` and zero the gradient:
+
+```css
+--cast-sheen: 0;
+--cast-shade: 0;
+--cast-surface-z: 2;
+```
+
+Edge on its own is untouched by any of this — no pseudo-element, no
+`position: relative`, and it can still share an element with room mode.
 
 **Two notes:**
 
@@ -358,20 +383,26 @@ without needing to know which theme is active.
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
 | `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
-| `--cast-grain` | `0.09` | Grain opacity |
-| `--cast-grain-size` | `140` | Grain tile size, in px |
+| `--cast-grain` | `0.2` | Grain opacity |
+| `--cast-grain-size` | `280` | Grain tile size, in px |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
 
 The sheen angle comes from CSS `atan2()`, so this needs no extra
 JavaScript. Grain exists to break up banding — large soft gradients band
-badly on 8-bit displays, and it halves its tile on high-DPI screens so the
-grain stays at device-pixel scale instead of going soft.
+badly on 8-bit displays. Its scale is the same at every device pixel ratio,
+for the reason given under room mode: grain hides banding by camouflage,
+and camouflage needs to be near the scale of what it's hiding.
 
 **An opaque child hides it.** The modelling paints at `z-index: -1`, behind
 the element's content, so a photo filling a card covers it completely —
 measured corner-to-corner spread across such a card face is `0`. Lift it
 with `--cast-surface-z: 2` and the sheen falls on the photo, where the light
-would actually land.
+would actually land. With `edge` on as well, the same number lifts the rim.
+
+On a photo the rim does most of the work. A photograph brings its own
+detail, so a soft gradient over it stays quiet — measured, the sheen moves
+a bright photo by about 7 levels and a near-black one by 14 — while a
+hairline at the border reads immediately.
 
 That costs contrast wherever it crosses type. On the demo's muted body text
 a sheen takes it from `5.27:1` to `4.54:1` at `0.07` and `3.92:1` at `0.14`,

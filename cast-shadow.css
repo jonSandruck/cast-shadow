@@ -249,6 +249,40 @@
 }
 
 /*
+ * Edge mode, lifted.
+ *
+ * An inset shadow paints above the element's own background but BELOW its
+ * content, so any opaque child that fills the box erases the rim. On the
+ * demo's photo cards the rim survived at 1-3 levels of luminance, which is
+ * nothing. There is no z knob that fixes this, because an inset shadow is
+ * not a layer.
+ *
+ * Surface mode's ::before IS a layer, and it already carries
+ * --cast-surface-z. So when both modes are on, the rim moves there and
+ * goes wherever the modelling goes: under the content by default, over the
+ * photo when lifted. The element keeps only the drop shadow, since
+ * box-shadow is not additive.
+ *
+ * At the default --cast-surface-z: -1 this paints in exactly the same
+ * place as the element-level rim, so it changes nothing for a card whose
+ * own background shows.
+ *
+ * Edge on its own is untouched: no pseudo-element, no position: relative,
+ * still free to share an element with room mode. If you want a lifted rim
+ * without a sheen, add surface and set --cast-sheen and --cast-shade to 0.
+ */
+[data-cast~="surface"][data-cast~="edge"] {
+  box-shadow: var(--cast-drop);
+}
+
+[data-cast~="surface"][data-cast~="edge"]::before {
+  box-shadow:
+    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-edge-lit),
+    inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
+      var(--cast-edge-shade);
+}
+
+/*
  * Shape mode. Traces the element's alpha silhouette, so a cutout logo
  * casts a logo-shaped shadow instead of a rectangle.
  *

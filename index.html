@@ -509,7 +509,8 @@
       filling a card covers it completely. Measured spread across such a
       card face is <code>0</code>. Lift it with
       <code>--cast-surface-z: 2</code>, at the cost of tinting whatever it
-      crosses; see <a href="#content">Real content</a>.
+      crosses. With <code>edge</code> on as well, the same number lifts the
+      rim; see <a href="#content">Real content</a>.
     </div>
 
     <h3 id="mode-edge">Edge — a directional rim</h3>
@@ -545,6 +546,20 @@
       best with none. It does not combine with <code>shape</code>:
       <code>inset</code> follows the border box, and shape mode clears
       <code>box-shadow</code> outright.
+    </div>
+    <div class="note">
+      <strong>An opaque child hides this too.</strong> An inset shadow
+      paints above the element's background but below its content, and
+      there is no <code>z-index</code> for it — it is not a layer. On a
+      card with a full-bleed photo the rim measured
+      <strong>1&ndash;3 levels</strong> of luminance, which is nothing.
+      Adding <code>surface</code> fixes it: the rim moves onto surface
+      mode's layer and rides <code>--cast-surface-z</code> with the sheen,
+      measuring <strong>23&ndash;68</strong> lifted. At the default
+      <code>-1</code> it paints in the same place as before, so nothing
+      changes for a card whose own background shows. Want a lifted rim and
+      no sheen? Add <code>surface</code> and set <code>--cast-sheen</code>
+      and <code>--cast-shade</code> to <code>0</code>.
     </div>
 
     <h3 id="mode-room">Room — light the space</h3>
@@ -585,15 +600,18 @@
 
     <h3>Media cards</h3>
     <p>
-      Images run full bleed, so <code>surface</code> would be hidden behind
-      them. These lift it with <code>--cast-surface-z: 2</code>, which puts
-      the modelling over the photo where the light would actually fall.
-      The three are picked for luminance: a bright portrait, a mid-tone
-      street scene, and a nearly black field of galaxies.
+      Images run full bleed, so both the sheen and the rim would be hidden
+      behind them. These lift both with <code>--cast-surface-z: 2</code>,
+      which puts the modelling over the photo where the light would
+      actually fall. The rim does most of the work here — a photo brings
+      its own detail, so a soft gradient over it stays quiet while a
+      hairline at the border reads immediately. The three are picked for
+      luminance: a bright portrait, a mid-tone street scene, and a nearly
+      black field of galaxies.
     </p>
 
     <div class="cards">
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
         <img src="demo/img/portrait.jpg" alt="Astronaut Eileen Collins in a flight suit" width="480" height="320">
         <div class="body">
           <p class="meta">Bright subject</p>
@@ -602,7 +620,7 @@
         </div>
       </article>
 
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
         <img src="demo/img/coffee.jpg" alt="A cup of coffee on a saucer, seen from above" width="480" height="320">
         <div class="body">
           <p class="meta">Mid tone</p>
@@ -611,7 +629,7 @@
         </div>
       </article>
 
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
         <img src="demo/img/deepfield.jpg" alt="The Hubble deep field, galaxies on black" width="480" height="320">
         <div class="body">
           <p class="meta">Dark subject</p>
