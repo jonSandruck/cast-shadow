@@ -594,6 +594,23 @@
   </div>
 
   <div class="tuner-body" id="t-body">
+  <h2>Light</h2>
+
+  <label for="t-temp">colour</label>
+  <select id="t-temp">
+    <option value="1800">1800K &middot; candle</option>
+    <option value="2700">2700K &middot; incandescent</option>
+    <option value="3000">3000K &middot; warm white</option>
+    <option value="3500">3500K &middot; soft white</option>
+    <option value="4000">4000K &middot; neutral white</option>
+    <option value="5000">5000K &middot; horizon daylight</option>
+    <option value="5600">5600K &middot; studio strobe</option>
+    <option value="6500" selected>6500K &middot; screen white</option>
+    <option value="7500">7500K &middot; overcast sky</option>
+    <option value="9000">9000K &middot; open shade</option>
+    <option value="12000">12000K &middot; blue sky</option>
+  </select>
+
   <h2>Grain</h2>
 
   <label for="t-grain">strength <output id="t-grain-v">0.20</output></label>
@@ -697,10 +714,12 @@
   // library's own defaults, so Reset means "what a fresh page looks like",
   // not "whatever the markup happened to say".
   const TUNER_DEFAULTS = {
+    temp: '6500',
     grain: '0.2', size: '280', blend: 'auto',
     vig: '0.05', pool: '0.05', strip: false,
   };
 
+  const tempInput = document.getElementById('t-temp');
   const grainInput = document.getElementById('t-grain');
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
@@ -725,6 +744,7 @@
     // than anything this can reasonably write, and a panel whose whole job
     // is to override needs to actually win.
     sheet.textContent = `
+      :root { --cast-light-color: var(--cast-${tempInput.value}k); }
       [data-cast~="room"], [data-cast~="surface"] {
         --cast-grain: ${grain} !important;
         --cast-grain-size: ${size} !important;
@@ -732,14 +752,14 @@
       }
       [data-cast~="room"] {
         --cast-room-dark: rgb(0 0 0 / ${vig}) !important;
-        --cast-room-light: rgb(255 255 255 / ${pool}) !important;
+        --cast-room-light: color-mix(in srgb, var(--cast-light-color) ${pool * 100}%, transparent) !important;
       }`;
 
     document.documentElement.classList.toggle('stripped', stripInput.checked);
 
     try {
       localStorage.setItem('cast-shadow-grain', JSON.stringify({
-        grain, size, blend, vig, pool,
+        grain, size, blend, vig, pool, temp: tempInput.value,
       }));
     } catch {}
   }
@@ -748,6 +768,7 @@
   try {
     const saved = JSON.parse(localStorage.getItem('cast-shadow-grain') || 'null');
     if (saved) {
+      tempInput.value = saved.temp ?? tempInput.value;
       grainInput.value = saved.grain ?? grainInput.value;
       sizeInput.value = saved.size ?? sizeInput.value;
       blendInput.value = saved.blend ?? blendInput.value;
@@ -758,11 +779,12 @@
 
   applyTuning();
 
-  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput]) {
+  for (const el of [grainInput, sizeInput, blendInput, stripInput, vigInput, poolInput, tempInput]) {
     el.addEventListener('input', applyTuning);
   }
 
   document.getElementById('t-reset').addEventListener('click', () => {
+    tempInput.value = TUNER_DEFAULTS.temp;
     grainInput.value = TUNER_DEFAULTS.grain;
     sizeInput.value = TUNER_DEFAULTS.size;
     blendInput.value = TUNER_DEFAULTS.blend;
