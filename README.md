@@ -194,8 +194,9 @@ from it.
 
 Two inset shadows reusing the same vector, composed into the same
 `box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
-layers have to be declared in one place. It is the cheapest thing in the
-library and does more for the illusion than anything else in it.
+layers have to be declared in one place. On its own it adds no element and
+no stacking context, which makes it the cheapest thing in the library, and
+it does more for the illusion than anything else in it.
 
 The offset is divided by the vector's larger component, so the rim sits at
 exactly `--cast-edge-width` on its dominant edge at every angle. Scaling
@@ -228,10 +229,40 @@ That's deliberate: those are broad soft areas where falloff reads as light,
 but a hairline crossing a fade threshold reads as flicker. Multiply by
 `(1 - var(--cast-t))` yourself if you want it to fall off.
 
+**An opaque child hides the rim.** An inset shadow paints above the
+element's background but *below* its content, and there is no `z-index` for
+it, because it isn't a layer. On a card with a full-bleed photo the rim
+measured 1-3 levels of luminance, which is nothing.
+
+Adding `surface` fixes it. When both modes are on, the rim is drawn on
+surface mode's `::before` instead, so it rides `--cast-surface-z` along
+with the sheen — under the content by default, over the photo when lifted.
+Measured on the same cards: 1-3 levels before, 23-68 lifted. At the default
+`--cast-surface-z: -1` it paints in exactly the same place as the
+element-level rim, so nothing changes for a card whose own background
+shows.
+
+If you want a lifted rim and no sheen, add `surface` and zero the gradient:
+
+```css
+--cast-sheen: 0;
+--cast-shade: 0;
+--cast-surface-z: 2;
+```
+
+Edge on its own is untouched by any of this — no pseudo-element, no
+`position: relative`, and it can still share an element with room mode.
+
 **Two notes:**
 
-- A border sits outside the inset rim and competes with it. Edge mode reads
-  best on an element with no border.
+- **Don't pair it with a border.** A border and a lit rim are two ways to
+  draw the same edge, and running both draws it twice. The rim paints just
+  inside the border box, so a border sits immediately outside it. Measured
+  across a card's left edge in light mode, luminance ran
+  `176 → 216 → 171 → 246` with a border and `179 → 171 → 221 → 245`
+  without — two contrast reversals inside 2px, versus one clean ramp. Dark
+  mode does the same thing (`12 → 51 → 25 → 36`). Either way it reads as a
+  misregistered stroke, so let the rim be the edge.
 - It doesn't combine with shape mode — `inset` follows the border box, not
   the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
   and surface do combine, and that pairing is the strongest look here.
@@ -357,14 +388,32 @@ without needing to know which theme is active.
 | `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
 | `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
-| `--cast-grain` | `0.09` | Grain opacity |
-| `--cast-grain-size` | `140` | Grain tile size, in px |
+| `--cast-surface-z` | `-1` | Which layer the modelling sits on |
+| `--cast-grain` | `0.2` | Grain opacity |
+| `--cast-grain-size` | `280` | Grain tile size, in px |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
 
 The sheen angle comes from CSS `atan2()`, so this needs no extra
 JavaScript. Grain exists to break up banding — large soft gradients band
-badly on 8-bit displays, and it halves its tile on high-DPI screens so the
-grain stays at device-pixel scale instead of going soft.
+badly on 8-bit displays. Its scale is the same at every device pixel ratio,
+for the reason given under room mode: grain hides banding by camouflage,
+and camouflage needs to be near the scale of what it's hiding.
+
+**An opaque child hides it.** The modelling paints at `z-index: -1`, behind
+the element's content, so a photo filling a card covers it completely —
+measured corner-to-corner spread across such a card face is `0`. Lift it
+with `--cast-surface-z: 2` and the sheen falls on the photo, where the light
+would actually land. With `edge` on as well, the same number lifts the rim.
+
+On a photo the rim does most of the work. A photograph brings its own
+detail, so a soft gradient over it stays quiet — measured, the sheen moves
+a bright photo by about 7 levels and a near-black one by 14 — while a
+hairline at the border reads immediately.
+
+That costs contrast wherever it crosses type. On the demo's muted body text
+a sheen takes it from `5.27:1` to `4.54:1` at `0.07` and `3.92:1` at `0.14`,
+which is below AA. Lift it for media cards, leave it alone for text-heavy
+ones.
 
 **Costs, stated plainly:**
 
@@ -474,5 +523,28 @@ custom properties and fall back to the static shadow.
 
 ## Demo
 
-`index.html`. Serve the folder and open it, then click anywhere to move the
-light.
+`index.html` is the full reference: every property documented with a live
+example, plus a section of article cards, avatars and buttons for seeing how
+it behaves on real content. Serve the folder and open it, then click
+anywhere to move the light.
+
+The library is still the two files at the root. `demo/img/` holds
+photographs for the documentation page only, chosen for luminance spread
+because that is what stresses the modelling: a bright portrait at mean 118,
+a mid-tone still life at 104, and the Hubble deep field at 20.
+
+They were taken from `scikit-image`'s bundled sample data, which is where
+they came from originally:
+
+| File | Source |
+| --- | --- |
+| `portrait.jpg` | NASA — astronaut Eileen Collins, public domain |
+| `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
+| `coffee.jpg`, `cat.jpg` | scikit-image sample data |
+| `avatar.jpg` | Rocket launch, scikit-image sample data |
+
+**Check the licences yourself before publishing this page anywhere
+public.** NASA imagery is public domain and safe; the scikit-image samples
+are distributed for use with that project and I have not verified their
+terms for other uses. Swapping in your own photos is a one-line change per
+card.

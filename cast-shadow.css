@@ -237,6 +237,16 @@
   --cast-edge-x: calc(var(--cast-ux) * var(--cast-edge-scale) * 1px);
   --cast-edge-y: calc(var(--cast-uy) * var(--cast-edge-scale) * 1px);
 
+  /*
+   * Pair this with a border and the edge gets drawn twice. The rim paints
+   * just inside the border box, so a border sits immediately outside it.
+   * Measured across a card's left edge in light mode, luminance ran
+   * 176 -> 216 -> 171 -> 246 with a border and 179 -> 171 -> 221 -> 245
+   * without: two contrast reversals inside 2px against one clean ramp.
+   * Dark mode does the same (12 -> 51 -> 25 -> 36). Either reads as a
+   * misregistered stroke. Let the rim be the edge.
+   */
+
   /* Deliberately not faded by distance, unlike the shadow and the sheen.
      Those are broad soft areas where falloff reads as light; a hairline
      crossing a fade threshold reads as flicker. Multiply by
@@ -246,6 +256,40 @@
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
       var(--cast-edge-shade),
     var(--cast-drop);
+}
+
+/*
+ * Edge mode, lifted.
+ *
+ * An inset shadow paints above the element's own background but BELOW its
+ * content, so any opaque child that fills the box erases the rim. On the
+ * demo's photo cards the rim survived at 1-3 levels of luminance, which is
+ * nothing. There is no z knob that fixes this, because an inset shadow is
+ * not a layer.
+ *
+ * Surface mode's ::before IS a layer, and it already carries
+ * --cast-surface-z. So when both modes are on, the rim moves there and
+ * goes wherever the modelling goes: under the content by default, over the
+ * photo when lifted. The element keeps only the drop shadow, since
+ * box-shadow is not additive.
+ *
+ * At the default --cast-surface-z: -1 this paints in exactly the same
+ * place as the element-level rim, so it changes nothing for a card whose
+ * own background shows.
+ *
+ * Edge on its own is untouched: no pseudo-element, no position: relative,
+ * still free to share an element with room mode. If you want a lifted rim
+ * without a sheen, add surface and set --cast-sheen and --cast-shade to 0.
+ */
+[data-cast~="surface"][data-cast~="edge"] {
+  box-shadow: var(--cast-drop);
+}
+
+[data-cast~="surface"][data-cast~="edge"]::before {
+  box-shadow:
+    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-edge-lit),
+    inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
+      var(--cast-edge-shade);
 }
 
 /*
@@ -320,6 +364,17 @@
   --cast-grain: 0.2;
   --cast-grain-size: 280;
 
+  /*
+   * Which layer the modelling sits on.
+   *
+   * Below the content by default, so it tints the card's own background
+   * and leaves its text alone. But an opaque child that fills the box —
+   * a photo in a card, most obviously — covers it completely: measured
+   * corner-to-corner spread on such a card is 0. Lift it above the
+   * content for those, at the cost of tinting whatever it crosses.
+   */
+  --cast-surface-z: -1;
+
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
      instead of punching through to an ancestor's. */
@@ -354,7 +409,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--cast-surface-z);
   pointer-events: none;
   border-radius: inherit;
 
