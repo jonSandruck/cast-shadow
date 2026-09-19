@@ -588,33 +588,35 @@
       Images run full bleed, so <code>surface</code> would be hidden behind
       them. These lift it with <code>--cast-surface-z: 2</code>, which puts
       the modelling over the photo where the light would actually fall.
+      The three are picked for luminance: a bright portrait, a mid-tone
+      street scene, and a nearly black field of galaxies.
     </p>
 
     <div class="cards">
       <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
-        <img src="demo/img/ridge.png" alt="Abstract warm ridge forms" width="480" height="320">
+        <img src="demo/img/portrait.jpg" alt="Astronaut Eileen Collins in a flight suit" width="480" height="320">
         <div class="body">
-          <p class="meta">Field notes</p>
-          <h4>Reading a slope by its shadows</h4>
-          <p>Angle tells you where the sun is. Length tells you how steep the ground is. Together they do most of the work of a contour map.</p>
+          <p class="meta">Bright subject</p>
+          <h4>Where there is no headroom</h4>
+          <p>A pale face and a white suit are already near the top of the range, so the sheen has almost nowhere to go. What form you see comes from the shaded corner.</p>
         </div>
       </article>
 
       <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
-        <img src="demo/img/harbour.png" alt="Abstract cool harbour forms" width="480" height="320">
+        <img src="demo/img/coffee.jpg" alt="A cup of coffee on a saucer, seen from above" width="480" height="320">
         <div class="body">
-          <p class="meta">Colour</p>
-          <h4>Why shade looks blue</h4>
-          <p>Because it is lit by sky rather than sun. Two sources, not one — which is also why a single lamp never gives you cool shadows.</p>
+          <p class="meta">Mid tone</p>
+          <h4>Both ends do some work</h4>
+          <p>Around the middle of the range there is room to move in either direction, so the sheen and the shading both read. This is the easy case.</p>
         </div>
       </article>
 
       <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2; --cast-sheen: 0.10">
-        <img src="demo/img/canopy.png" alt="Abstract green canopy forms" width="480" height="320">
+        <img src="demo/img/deepfield.jpg" alt="The Hubble deep field, galaxies on black" width="480" height="320">
         <div class="body">
-          <p class="meta">Optics</p>
-          <h4>The size of the source</h4>
-          <p>A small source gives a hard edge, a broad one gives a soft edge. Penumbra width scales with how wide the light is, not how bright.</p>
+          <p class="meta">Dark subject</p>
+          <h4>Where the highlight finally shows</h4>
+          <p>Mean luminance under 20. The shaded end has nothing left to take away, and the lit end is the only one you can see — the exact inverse of the portrait.</p>
         </div>
       </article>
     </div>
@@ -625,6 +627,28 @@
   &lt;img src="…" alt="…"&gt;
   &lt;div class="body"&gt;…&lt;/div&gt;
 &lt;/article&gt;</code></pre>
+    </div>
+
+    <h3>The layer, side by side</h3>
+    <p>
+      Same photo, same settings, one property different. On the left the
+      modelling sits at its default layer and the image covers it entirely.
+      On the right it is lifted over the photo.
+    </p>
+
+    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));max-width:640px">
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: -1</code> — hidden</figcaption>
+      </figure>
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: 2</code> — lifted</figcaption>
+      </figure>
     </div>
 
     <div class="note">
@@ -674,7 +698,7 @@
 
     <div class="stage" style="gap:22px">
       <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
-        <img src="demo/img/slate.png" alt="" width="62" height="62">
+        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
         <div>
           <h4>Ada Bell</h4>
           <p>Lighting, stage &amp; screen</p>

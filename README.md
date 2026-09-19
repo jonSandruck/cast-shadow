@@ -492,6 +492,22 @@ it behaves on real content. Serve the folder and open it, then click
 anywhere to move the light.
 
 The library is still the two files at the root. `demo/img/` holds
-placeholder imagery for the documentation page only — generated, not
-photographic, so swap in real photos if you want a truer read on how the
-modelling sits over a picture.
+photographs for the documentation page only, chosen for luminance spread
+because that is what stresses the modelling: a bright portrait at mean 118,
+a mid-tone still life at 104, and the Hubble deep field at 20.
+
+They were taken from `scikit-image`'s bundled sample data, which is where
+they came from originally:
+
+| File | Source |
+| --- | --- |
+| `portrait.jpg` | NASA — astronaut Eileen Collins, public domain |
+| `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
+| `coffee.jpg`, `cat.jpg` | scikit-image sample data |
+| `avatar.jpg` | Rocket launch, scikit-image sample data |
+
+**Check the licences yourself before publishing this page anywhere
+public.** NASA imagery is public domain and safe; the scikit-image samples
+are distributed for use with that project and I have not verified their
+terms for other uses. Swapping in your own photos is a one-line change per
+card.
