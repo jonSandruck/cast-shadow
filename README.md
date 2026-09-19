@@ -229,6 +229,18 @@ That's deliberate: those are broad soft areas where falloff reads as light,
 but a hairline crossing a fade threshold reads as flicker. Multiply by
 `(1 - var(--cast-t))` yourself if you want it to fall off.
 
+**It does fade with angle**, by the same obliqueness term as the sheen —
+an edge lit from straight above has no bright side and no dark side.
+Measured on a mid-grey tile at `d = 250`, rim delta runs 45.3 levels with
+the light at `H = 200` and 7.6 at `H = 1600`. That is a different curve
+from distance fade and does not bring the flicker with it: obliqueness
+moves smoothly with position, so the hairline never steps.
+
+It is applied by mixing whatever colour you set toward transparent rather
+than by owning the alpha, so `--cast-edge-lit` and `--cast-edge-shade`
+stay full colours you can replace outright, and a warm rim set by hand
+still fades with angle.
+
 **An opaque child hides the rim.** An inset shadow paints above the
 element's background but *below* its content, and there is no `z-index` for
 it, because it isn't a layer. On a card with a full-bleed photo the rim
@@ -387,11 +399,69 @@ without needing to know which theme is active.
 | --- | --- | --- |
 | `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
-| `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
+| `--cast-sheen-reach` | from light size | Terminator width; `45%` at the default source |
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.2` | Grain opacity |
 | `--cast-grain-size` | `280` | Grain tile size, in px |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
+
+### The light's height and size reach the face too
+
+Throw and blur both come from `h / (H - h)`, so they always answered to
+the light's height. The face modelling did not — it knew only direction
+and distance. Moving the light from 200 to 1600 changed the throw 8.3x
+and the sheen 0x.
+
+Two terms fix that.
+
+**Obliqueness** is `d / (H - h)`: how far the light is off to one side
+compared with how far up. It is 0 directly overhead, 1 at 45 degrees, and
+clamps there because the look saturates well before the ratio does. The
+sheen and the rim both scale by it, so a face lit from straight above has
+no lit side and one lit from a low raking angle has a strong one.
+
+Measured on a mid-grey tile, sheen spread in levels of luminance, at the
+default light height of 600:
+
+| distance | `H` = 200 | `H` = 600 | `H` = 1600 |
+| --- | --- | --- | --- |
+| 0 | 0.5 | 0.5 | 0.5 |
+| 250 | 19.4 | 8.8 | 3.4 |
+| 550 | 12.2 | 11.6 | 4.4 |
+
+This also fixes a quieter bug. At `d = 0` an element sits exactly on the
+light, so `--cast-ux` and `--cast-uy` are both zero and the gradient angle
+is whatever `atan2(0, 0)` returns. The sheen used to be at full strength
+there — 23.5 levels, its maximum — pointing nowhere in particular. Now it
+is 0.5.
+
+**Source size** sets `--cast-sheen-reach`, the width of the terminator. A
+small hard source draws a tight, high-contrast falloff; a big soft one
+draws a gradual wash. Same number that sets the shadow's blur, so the two
+stay consistent instead of one being crisp while the other is soft.
+
+| `--cast-light-size` | reach |
+| --- | --- |
+| `20` | 16.9% |
+| `60` | 30.3% |
+| `350` | 45.0% |
+| `900` | 47.9% |
+
+It saturates near the top, which is correct rather than lazy: past a
+certain source size the terminator is already as soft as a linear
+gradient can draw, even while the shadow keeps on blurring. The default
+source lands at 44.99%, which is exactly where this sat as a fixed
+number, so a page that never touches light size sees no change from it.
+
+**What this costs.** Obliqueness is never above 1, so it can only reduce
+the sheen, never raise it. Elements beyond `H - h` from the light are
+unchanged; nearer ones get weaker, which is the whole point. On the demo's
+text cards the sheen drops about 20% and the rim about 23%. The defaults
+were not raised to compensate — doing that would have made distant faces
+stronger than they used to be, to hide a correction that is the feature.
+
+Nothing here changes the browser floor. It is `min()`, `clamp()`,
+`color-mix()` and ordinary `calc()`, all already required.
 
 The sheen angle comes from CSS `atan2()`, so this needs no extra
 JavaScript. Grain exists to break up banding — large soft gradients band

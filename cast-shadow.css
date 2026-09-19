@@ -169,6 +169,29 @@
   /* Normalised distance, for anything that should fade with range. */
   --cast-t: min(calc(var(--cast-d) / var(--cast-max-d)), 1);
 
+  /*
+   * How oblique the light strikes a face: horizontal run over vertical
+   * rise, which is tan of the angle from straight overhead. 0 is directly
+   * above, 1 is 45 degrees, and it clamps there because past 45 the look
+   * saturates long before the ratio does.
+   *
+   * This is the term the face modelling was missing. Throw and blur both
+   * come from h / (H - h), so they already answer to the light's height,
+   * but the sheen and the rim only knew direction and distance -- moving
+   * the light from 200 to 1600 changed the throw 8.3x and the face 0x.
+   *
+   * It also fixes a quieter bug. At d = 0 an element sits exactly on the
+   * light, so --cast-ux and --cast-uy are both zero and the gradient angle
+   * is whatever atan2(0, 0) returns. The sheen was at full strength there,
+   * pointing nowhere in particular; measured spread was 23.5 levels, its
+   * maximum. Obliqueness is zero at that point, so now it fades out
+   * instead. A face directly under a light has no lit side.
+   */
+  --cast-oblique: min(
+    calc(var(--cast-d) / max(var(--cast-light-z) - var(--cast-elevation), 1)),
+    1
+  );
+
   --cast-alpha: calc(
     var(--cast-alpha-near) + var(--cast-t) * (var(--cast-alpha-far) - var(--cast-alpha-near))
   );
@@ -238,6 +261,27 @@
   --cast-edge-y: calc(var(--cast-uy) * var(--cast-edge-scale) * 1px);
 
   /*
+   * The rim answers to obliqueness for the same reason the sheen does: an
+   * edge lit from straight above has no bright side and no dark side.
+   *
+   * Applied by mixing whatever colour the author set toward transparent,
+   * rather than by owning the alpha. --cast-edge-lit and --cast-edge-shade
+   * stay full colours you can replace outright, and a warm rim set by
+   * hand still fades with angle.
+   *
+   * It does not fade with distance, and that has not changed. Those are
+   * different curves: a broad soft area crossing a fade threshold reads
+   * as light, a hairline reads as flicker. Obliqueness moves smoothly
+   * with position, so the hairline never steps.
+   */
+  --cast-rim-lit: color-mix(
+    in srgb, var(--cast-edge-lit) calc(var(--cast-oblique) * 100%), transparent
+  );
+  --cast-rim-shade: color-mix(
+    in srgb, var(--cast-edge-shade) calc(var(--cast-oblique) * 100%), transparent
+  );
+
+  /*
    * Pair this with a border and the edge gets drawn twice. The rim paints
    * just inside the border box, so a border sits immediately outside it.
    * Measured across a card's left edge in light mode, luminance ran
@@ -252,9 +296,9 @@
      crossing a fade threshold reads as flicker. Multiply by
      (1 - var(--cast-t)) yourself if you want it to fall off. */
   box-shadow:
-    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-edge-lit),
+    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
-      var(--cast-edge-shade),
+      var(--cast-rim-shade),
     var(--cast-drop);
 }
 
@@ -287,9 +331,9 @@
 
 [data-cast~="surface"][data-cast~="edge"]::before {
   box-shadow:
-    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-edge-lit),
+    inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
-      var(--cast-edge-shade);
+      var(--cast-rim-shade);
 }
 
 /*
@@ -335,8 +379,33 @@
   --cast-sheen: 0.14;
   --cast-shade: 0.09;
 
-  /* How far each term carries in from its own edge. */
-  --cast-sheen-reach: 45%;
+  /*
+   * How far each term carries in from its own edge, which is the width of
+   * the terminator: the band where lit turns to unlit.
+   *
+   * A small hard source draws a tight, high-contrast falloff; a big soft
+   * one draws a gradual wash. So this follows --cast-light-size, the same
+   * number that sets the shadow's blur, and the two stay consistent
+   * instead of one being soft while the other is crisp.
+   *
+   * 50% is the ceiling, where the two ramps meet in the middle and the
+   * gradient is as smooth as it can be. The 39 puts the default source
+   * (350) at 44.99%, which is where this sat as a fixed number, so a page
+   * that never touches light size sees no change.
+   *
+   *   size   20 -> 16.9%    a hard point source
+   *   size   60 -> 30.3%    midday sun
+   *   size  350 -> 45.0%    the default softbox
+   *   size 1200 -> 48.4%    heavy overcast
+   *
+   * It saturates at the top end, which is correct: past a certain size
+   * the terminator is already as soft as a linear gradient can draw.
+   */
+  --cast-sheen-reach: clamp(
+    8%,
+    calc(50% * var(--cast-light-size) / (var(--cast-light-size) + 39)),
+    50%
+  );
 
   /*
    * Grain scale, in CSS px, and the same at every device pixel ratio.
@@ -400,9 +469,21 @@
    */
   --cast-sheen-angle: atan2(var(--cast-ux), calc(var(--cast-uy) * -1));
 
-  /* Both terms fade with range, so distant objects stay matte. */
-  --cast-sheen-alpha: calc(var(--cast-sheen) * (1 - var(--cast-t)));
-  --cast-shade-alpha: calc(var(--cast-shade) * (1 - var(--cast-t)));
+  /*
+   * Two factors, and they pull in opposite directions on purpose.
+   *
+   * --cast-oblique rises with distance: the further off to one side the
+   * light is, the more raking it strikes the face and the stronger the
+   * cross-face gradient. (1 - t) falls with distance, standing in for the
+   * light simply being further away. The product peaks at middling range
+   * and fades at both ends, which is what a real face does.
+   *
+   * Keeping both is a choice. Obliqueness alone would leave distant faces
+   * at full strength, and falloff alone is what we had -- brightest
+   * exactly where the light is overhead and the effect should vanish.
+   */
+  --cast-sheen-alpha: calc(var(--cast-sheen) * var(--cast-oblique) * (1 - var(--cast-t)));
+  --cast-shade-alpha: calc(var(--cast-shade) * var(--cast-oblique) * (1 - var(--cast-t)));
 }
 
 [data-cast~="surface"]::before {
