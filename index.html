@@ -541,6 +541,27 @@
 }</code></pre>
     </div>
     <div class="note">
+      <strong>The light's height and size reach the face.</strong> Sheen
+      strength follows how oblique the light is —
+      <code>d / (H &minus; h)</code>, zero straight overhead and clamped
+      at 45&deg; — and <code>--cast-sheen-reach</code> follows
+      <code>--cast-light-size</code>, so a hard source draws a tight
+      falloff and a soft one a gradual wash. Drag <strong>height</strong>
+      in the tuner and watch the modelling change with the shadow instead
+      of sitting still. Measured on a mid-grey tile at
+      <code>d&nbsp;=&nbsp;250</code>, sheen spread runs
+      <code>19.4</code> levels at <code>H&nbsp;=&nbsp;200</code> and
+      <code>3.4</code> at <code>H&nbsp;=&nbsp;1600</code>.
+    </div>
+    <div class="note">
+      <strong>An object sitting on the light has no lit side.</strong> At
+      <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
+      gradient angle means nothing. The sheen used to run at full strength
+      there — <code>23.5</code> levels, its maximum — aimed in an
+      arbitrary direction. Obliqueness is zero at that point, so it now
+      measures <code>0.5</code>.
+    </div>
+    <div class="note">
       <strong>Tune by surface, not by theme.</strong> Compositing leaves
       almost no headroom above a light surface: white at alpha
       <code>0.14</code> over <code>#fcfbf9</code> moves it 0.2 ΔL*, while
@@ -596,6 +617,16 @@
       reversals inside 2px, versus one clean ramp. It reads as a
       misregistered stroke. Every card on this page sets
       <code>border: 0</code> where edge mode is on.
+    </div>
+    <div class="note">
+      <strong>The rim fades with angle, not with distance.</strong> It
+      scales by the same obliqueness term as the sheen, because an edge
+      lit from straight above has no bright side and no dark side — at
+      <code>d&nbsp;=&nbsp;250</code> the rim delta runs <code>45.3</code>
+      levels with the light at <code>H&nbsp;=&nbsp;200</code> and
+      <code>7.6</code> at <code>H&nbsp;=&nbsp;1600</code>. Distance fade
+      stays off: a broad soft area crossing a fade threshold reads as
+      light, a hairline reads as flicker.
     </div>
     <div class="note">
       It does not combine with <code>shape</code>: <code>inset</code>
@@ -818,7 +849,7 @@
       <tbody>
         <tr><td><code>--cast-sheen</code></td><td><code>0.14</code></td><td>Highlight strength on the lit edge</td></tr>
         <tr><td><code>--cast-shade</code></td><td><code>0.09</code></td><td>Shading strength on the unlit edge</td></tr>
-        <tr><td><code>--cast-sheen-reach</code></td><td><code>45%</code></td><td>How far each term carries in</td></tr>
+        <tr><td><code>--cast-sheen-reach</code></td><td>from light size</td><td>Terminator width; <code>45%</code> at the default source</td></tr>
         <tr><td><code>--cast-surface-z</code></td><td><code>-1</code></td><td>Layer the modelling sits on</td></tr>
       </tbody>
     </table></div>
