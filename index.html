@@ -935,6 +935,23 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     <option value="12000">12000K &middot; blue sky</option>
   </select>
 
+  <label for="t-lz">height <output id="t-lz-v">600</output></label>
+  <input type="range" id="t-lz" min="200" max="1600" step="20" value="600">
+
+  <label for="t-lsize">size <output id="t-lsize-v">350</output></label>
+  <input type="range" id="t-lsize" min="20" max="1200" step="10" value="350">
+
+  <h2>Room</h2>
+
+  <label for="t-vig">vignette <output id="t-vig-v">0.05</output></label>
+  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.05">
+
+  <label for="t-pool">pool <output id="t-pool-v">0.05</output></label>
+  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.05">
+
+  </div>
+
+  <div class="tuner-col">
   <h2>Grain</h2>
 
   <label for="t-grain">strength <output id="t-grain-v">0.20</output></label>
@@ -952,17 +969,6 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     <option value="luminosity">luminosity</option>
     <option value="normal">normal</option>
   </select>
-
-  </div>
-
-  <div class="tuner-col">
-  <h2>Room</h2>
-
-  <label for="t-vig">vignette <output id="t-vig-v">0.05</output></label>
-  <input type="range" id="t-vig" min="0" max="0.5" step="0.01" value="0.05">
-
-  <label for="t-pool">pool <output id="t-pool-v">0.05</output></label>
-  <input type="range" id="t-pool" min="0" max="0.5" step="0.01" value="0.05">
 
   <label class="check" for="t-strip">
     <input type="checkbox" id="t-strip">
@@ -1053,7 +1059,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   // the element. This writes a rule at the end of the document instead.
 
   const TUNER_DEFAULTS = {
-    temp: '6500', grain: '0.2', size: '280', blend: 'auto',
+    temp: '6500', lz: '600', lsize: '350',
+    grain: '0.2', size: '280', blend: 'auto',
     vig: '0.05', pool: '0.05', strip: false,
   };
 
@@ -1062,6 +1069,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   document.body.appendChild(sheet);
 
   const tempInput = document.getElementById('t-temp');
+  const lzInput = document.getElementById('t-lz');
+  const lsizeInput = document.getElementById('t-lsize');
   const grainInput = document.getElementById('t-grain');
   const sizeInput = document.getElementById('t-size');
   const blendInput = document.getElementById('t-blend');
@@ -1072,7 +1081,10 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   function applyTuning() {
     const grain = grainInput.value, size = sizeInput.value, blend = blendInput.value;
     const vig = vigInput.value, pool = poolInput.value;
+    const lz = lzInput.value, lsize = lsizeInput.value;
 
+    document.getElementById('t-lz-v').textContent = lz;
+    document.getElementById('t-lsize-v').textContent = lsize;
     document.getElementById('t-grain-v').textContent = Number(grain).toFixed(2);
     document.getElementById('t-size-v').textContent = size;
     document.getElementById('t-vig-v').textContent = Number(vig).toFixed(2);
@@ -1082,7 +1094,11 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     // anything this can reasonably write, and a panel whose whole job is
     // to override needs to win.
     sheet.textContent = `
-      :root { --cast-light-color: var(--cast-${tempInput.value}k); }
+      :root {
+        --cast-light-color: var(--cast-${tempInput.value}k);
+        --cast-light-z: ${lz};
+        --cast-light-size: ${lsize};
+      }
       [data-cast~="room"], [data-cast~="surface"] {
         --cast-grain: ${grain} !important;
         --cast-grain-size: ${size} !important;
@@ -1097,7 +1113,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
     try {
       localStorage.setItem('cast-shadow-tuner', JSON.stringify({
-        temp: tempInput.value, grain, size, blend, vig, pool,
+        temp: tempInput.value, lz, lsize, grain, size, blend, vig, pool,
       }));
     } catch {}
   }
@@ -1106,6 +1122,8 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     const saved = JSON.parse(localStorage.getItem('cast-shadow-tuner') || 'null');
     if (saved) {
       tempInput.value = saved.temp ?? tempInput.value;
+      lzInput.value = saved.lz ?? lzInput.value;
+      lsizeInput.value = saved.lsize ?? lsizeInput.value;
       grainInput.value = saved.grain ?? grainInput.value;
       sizeInput.value = saved.size ?? sizeInput.value;
       blendInput.value = saved.blend ?? blendInput.value;
@@ -1116,12 +1134,15 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   applyTuning();
 
-  for (const el of [tempInput, grainInput, sizeInput, blendInput, vigInput, poolInput, stripInput]) {
+  for (const el of [tempInput, lzInput, lsizeInput, grainInput, sizeInput,
+                   blendInput, vigInput, poolInput, stripInput]) {
     el.addEventListener('input', applyTuning);
   }
 
   document.getElementById('t-reset').addEventListener('click', () => {
     tempInput.value = TUNER_DEFAULTS.temp;
+    lzInput.value = TUNER_DEFAULTS.lz;
+    lsizeInput.value = TUNER_DEFAULTS.lsize;
     grainInput.value = TUNER_DEFAULTS.grain;
     sizeInput.value = TUNER_DEFAULTS.size;
     blendInput.value = TUNER_DEFAULTS.blend;
