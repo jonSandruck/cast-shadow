@@ -180,6 +180,22 @@
     border-radius: 10px; padding: 9px 18px; cursor: pointer;
   }
 
+  /*
+   * A border and a lit rim are two ways to draw the same edge, and running
+   * both draws it twice. The rim paints just inside the border box, so a
+   * border sits immediately outside it and you get two contrast reversals
+   * within 2px. Measured across a card's left edge in light mode:
+   *
+   *   with a border   176 | 216 | 171 | 246    up 40, down 45, up 75
+   *   without         179 | 171 | 221 | 245    one ramp, dark to light
+   *
+   * Dark mode does the same thing (12 | 51 | 25 | 36). Either reads as a
+   * misregistered stroke. Let the rim be the edge.
+   *
+   * Same specificity as .article and .btn, so this has to come after them.
+   */
+  [data-cast~="edge"] { border: 0; }
+
   /* ---- The light ----------------------------------------------------- */
   .lamp {
     position: fixed; left: var(--cast-light-x); top: var(--cast-light-y);
@@ -542,10 +558,20 @@
 }</code></pre>
     </div>
     <div class="note">
-      A border sits outside the rim and competes with it, so edge mode reads
-      best with none. It does not combine with <code>shape</code>:
-      <code>inset</code> follows the border box, and shape mode clears
-      <code>box-shadow</code> outright.
+      <strong>Don't pair it with a border.</strong> A border and a lit rim
+      are two ways to draw the same edge, and running both draws it twice.
+      The rim paints just inside the border box, so a border sits
+      immediately outside it. Measured across a card's left edge in light
+      mode, luminance ran <code>176 → 216 → 171 → 246</code> with a border
+      and <code>179 → 171 → 221 → 245</code> without: two contrast
+      reversals inside 2px, versus one clean ramp. It reads as a
+      misregistered stroke. Every card on this page sets
+      <code>border: 0</code> where edge mode is on.
+    </div>
+    <div class="note">
+      It does not combine with <code>shape</code>: <code>inset</code>
+      follows the border box, and shape mode clears <code>box-shadow</code>
+      outright.
     </div>
     <div class="note">
       <strong>An opaque child hides this too.</strong> An inset shadow
@@ -673,9 +699,9 @@
       <strong>Lifting the modelling costs contrast.</strong> On this page's
       muted body text, a sheen crossing the type takes it from
       <code>5.27:1</code> to <code>4.54:1</code> at <code>0.07</code> and
-      <code>3.92:1</code> at <code>0.14</code> — below AA. The cards above
-      use <code>0.10</code> and keep the sheen mostly over the photo. If
-      your card is text-heavy, leave <code>--cast-surface-z</code> alone.
+      <code>3.92:1</code> at <code>0.14</code> — below AA. Lift it for a
+      card whose face is mostly photo, and leave
+      <code>--cast-surface-z</code> alone for a text-heavy one.
     </div>
 
     <h3>Text-only cards</h3>

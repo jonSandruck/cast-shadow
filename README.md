@@ -255,8 +255,14 @@ Edge on its own is untouched by any of this — no pseudo-element, no
 
 **Two notes:**
 
-- A border sits outside the inset rim and competes with it. Edge mode reads
-  best on an element with no border.
+- **Don't pair it with a border.** A border and a lit rim are two ways to
+  draw the same edge, and running both draws it twice. The rim paints just
+  inside the border box, so a border sits immediately outside it. Measured
+  across a card's left edge in light mode, luminance ran
+  `176 → 216 → 171 → 246` with a border and `179 → 171 → 221 → 245`
+  without — two contrast reversals inside 2px, versus one clean ramp. Dark
+  mode does the same thing (`12 → 51 → 25 → 36`). Either way it reads as a
+  misregistered stroke, so let the rim be the edge.
 - It doesn't combine with shape mode — `inset` follows the border box, not
   the alpha silhouette, and shape mode clears `box-shadow` entirely. Edge
   and surface do combine, and that pairing is the strongest look here.
