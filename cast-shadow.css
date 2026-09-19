@@ -57,6 +57,37 @@
 }
 
 /*
+ * Colour temperature, as sRGB tints.
+ *
+ * Computed from the Planckian locus and normalised so the brightest
+ * channel is 1 — these set hue, not brightness. CSS cannot evaluate the
+ * conversion, so the scale ships as constants; --cast-light-color takes
+ * any colour, so anything between or outside them is a hex away.
+ *
+ * Note where neutral sits. sRGB's white point IS D65, so 6500K is white
+ * by definition and every warmer temperature reads yellow on screen.
+ * 4000K is "neutral white" in a room and a visible tungsten wash here.
+ */
+:root {
+  --cast-1800k: #ff7e00;        /* candle */
+  --cast-2700k: #ffad59;        /* incandescent */
+  --cast-3000k: #ffb86d;        /* warm white */
+  --cast-3500k: #ffc78b;        /* soft white */
+  --cast-4000k: #ffd3a5;        /* neutral white */
+  --cast-5000k: #ffe6d0;        /* horizon daylight */
+  --cast-5600k: #ffefe4;        /* studio strobe */
+  /* Snapped to pure white. D65 sits on the daylight locus, not the
+     blackbody one, so the Planckian value at 6500K lands a shade off
+     (#fff9fe). Since this is the default, exactly neutral beats exactly
+     accurate — otherwise the library tints everything by a third of a
+     level for no reason. */
+  --cast-6500k: #ffffff;        /* D65, and sRGB white */
+  --cast-7500k: #ebecff;        /* overcast sky */
+  --cast-9000k: #d6dfff;        /* open shade */
+  --cast-12000k: #c0d1ff;       /* clear blue sky */
+}
+
+/*
  * The light.
  *
  * x and y place it in the viewport — percentages, px, vw and vh all work.
@@ -72,6 +103,20 @@
   --cast-light-y: 0%;
   --cast-light-z: 600;
   --cast-light-size: 350;
+
+  /*
+   * What the lamp throws. Tints everything the light reaches: the surface
+   * sheen, the lit rim, the room's pool.
+   *
+   * Shadows stay neutral, on purpose. A shadow is only tinted when some
+   * OTHER source fills it — sun plus sky, or a lamp plus a window — and
+   * that is a second light, not a property of this one. One bulb in a room
+   * bounces off the walls at roughly its own temperature, so its shadows
+   * are simply darker, not bluer. Cool shadows under a warm key belong to
+   * a multiple-light model; putting them here would be dressing up a
+   * two-lamp effect as one.
+   */
+  --cast-light-color: var(--cast-6500k);
 }
 
 [data-cast] {
@@ -167,7 +212,7 @@
    * at the same, so neither theme shouts. Each surface leans on whichever
    * end has headroom and the other costs nothing.
    */
-  --cast-edge-lit: rgb(255 255 255 / 0.3);
+  --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 30%, transparent);
   --cast-edge-shade: rgb(0 0 0 / 0.34);
 
   /*
@@ -317,8 +362,8 @@
      straight into black would run the midpoint through grey. */
   background-image: linear-gradient(
     var(--cast-sheen-angle),
-    rgb(255 255 255 / var(--cast-sheen-alpha)) 0%,
-    rgb(255 255 255 / 0) var(--cast-sheen-reach),
+    color-mix(in srgb, var(--cast-light-color) calc(var(--cast-sheen-alpha) * 100%), transparent) 0%,
+    color-mix(in srgb, var(--cast-light-color) 0%, transparent) var(--cast-sheen-reach),
     rgb(0 0 0 / 0) calc(100% - var(--cast-sheen-reach)),
     rgb(0 0 0 / var(--cast-shade-alpha)) 100%
   );
@@ -367,7 +412,7 @@
 
   /* Two ends again. On a pale page the pool does nothing and the vignette
      carries it; on a dark page the reverse. Tune by surface, not theme. */
-  --cast-room-light: rgb(255 255 255 / 0.05);
+  --cast-room-light: color-mix(in srgb, var(--cast-light-color) 5%, transparent);
   --cast-room-dark: rgb(0 0 0 / 0.05);
 
   /* Higher than surface mode's, because a room-sized gradient bands far
@@ -410,7 +455,7 @@
     radial-gradient(
       circle calc(var(--cast-room-reach) * 1px) at var(--cast-room-at),
       var(--cast-room-light),
-      rgb(255 255 255 / 0)
+      color-mix(in srgb, var(--cast-light-color) 0%, transparent)
     ),
     radial-gradient(
       circle farthest-corner at var(--cast-room-at),
@@ -478,7 +523,7 @@ body[data-cast~="room"]::before {
       circle calc(var(--cast-room-reach) * 1px)
       at var(--cast-light-x) var(--cast-light-y),
       var(--cast-room-light),
-      rgb(255 255 255 / 0)
+      color-mix(in srgb, var(--cast-light-color) 0%, transparent)
     ),
     radial-gradient(
       circle farthest-corner at var(--cast-light-x) var(--cast-light-y),

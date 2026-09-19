@@ -51,6 +51,62 @@ one multiply instead of a hand-tuned curve. Two objects at the same height
 share a blur no matter where they sit on screen. That consistency is what
 makes a layout read as one lit scene rather than a pile of separate shadows.
 
+## Light colour
+
+```css
+:root { --cast-light-color: var(--cast-2700k); }
+```
+
+Tints everything the light reaches — the surface sheen, the lit rim, the
+room's pool. It takes any colour, so a hex or an `oklch()` works; the
+Kelvin scale ships as named constants, computed from the Planckian locus
+and normalised so the brightest channel is 1.
+
+| Token | Hex | Reads as |
+| --- | --- | --- |
+| `--cast-1800k` | `#ff7e00` | candle |
+| `--cast-2700k` | `#ffad59` | incandescent |
+| `--cast-3000k` | `#ffb86d` | warm white |
+| `--cast-3500k` | `#ffc78b` | soft white |
+| `--cast-4000k` | `#ffd3a5` | neutral white |
+| `--cast-5000k` | `#ffe6d0` | horizon daylight |
+| `--cast-5600k` | `#ffefe4` | studio strobe |
+| `--cast-6500k` | `#ffffff` | D65, and sRGB white |
+| `--cast-7500k` | `#ebecff` | overcast sky |
+| `--cast-9000k` | `#d6dfff` | open shade |
+| `--cast-12000k` | `#c0d1ff` | clear blue sky |
+
+**Neutral is 6500K, not 4000K.** sRGB's white point *is* D65, so 6500K is
+white by definition and every warmer temperature reads yellow on screen.
+4000K is "neutral white" in a room and a visible tungsten wash on a
+display. 6500K is snapped to pure white so the default tints nothing —
+D65 sits on the daylight locus rather than the blackbody one, so the
+strictly accurate value lands a shade off and would tint every page by a
+third of a level for no reason.
+
+CSS cannot evaluate the conversion, so this is a table rather than a
+function. `--cast-light-color: 3200K` is not a thing; moving the maths
+into JavaScript would allow it, at the cost of room mode's "needs no
+JavaScript" property.
+
+### Shadows stay neutral, deliberately
+
+A warm light does not make warm shadows, and it does not make cool ones
+either. A shadow is only tinted when some *other* source fills it — sun
+plus sky, or a lamp plus a window — and that is a second light, not a
+property of this one. One bulb in a room bounces off the walls at roughly
+its own temperature, so its shadows come out darker, not bluer.
+
+The cool-shadow-under-warm-key effect is real and worth having, but it
+belongs to a multiple-light model. Tinting shadows from a single light's
+colour would be dressing up a two-lamp effect as one, so this doesn't.
+
+There is also a practical reason. An unlit colour has to be darker than
+whatever it sits on, and pure black always is. A tinted dark is not: mixing
+a pale sky blue into black gives `rgb(30, 31, 36)`, which is darker than
+paper and *lighter* than a dark page — so tinted shadows vanish in dark
+mode. Shadows keep their own knobs.
+
 ## The light
 
 ```css
@@ -133,7 +189,7 @@ from it.
 | Property | Default | What it does |
 | --- | --- | --- |
 | `--cast-edge-width` | `1` | Rim width, in px |
-| `--cast-edge-lit` | `rgb(255 255 255 / 0.3)` | Colour of the lit rim |
+| `--cast-edge-lit` | 30% of the light's colour | Colour of the lit rim |
 | `--cast-edge-shade` | `rgb(0 0 0 / 0.34)` | Colour of the shaded rim |
 
 Two inset shadows reusing the same vector, composed into the same
