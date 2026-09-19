@@ -320,6 +320,17 @@
   --cast-grain: 0.2;
   --cast-grain-size: 280;
 
+  /*
+   * Which layer the modelling sits on.
+   *
+   * Below the content by default, so it tints the card's own background
+   * and leaves its text alone. But an opaque child that fills the box —
+   * a photo in a card, most obviously — covers it completely: measured
+   * corner-to-corner spread on such a card is 0. Lift it above the
+   * content for those, at the cost of tinting whatever it crosses.
+   */
+  --cast-surface-z: -1;
+
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
      instead of punching through to an ancestor's. */
@@ -354,7 +365,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--cast-surface-z);
   pointer-events: none;
   border-radius: inherit;
 

@@ -357,6 +357,7 @@ without needing to know which theme is active.
 | `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
 | `--cast-sheen-reach` | `45%` | How far each term carries in from its edge |
+| `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.09` | Grain opacity |
 | `--cast-grain-size` | `140` | Grain tile size, in px |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
@@ -365,6 +366,17 @@ The sheen angle comes from CSS `atan2()`, so this needs no extra
 JavaScript. Grain exists to break up banding — large soft gradients band
 badly on 8-bit displays, and it halves its tile on high-DPI screens so the
 grain stays at device-pixel scale instead of going soft.
+
+**An opaque child hides it.** The modelling paints at `z-index: -1`, behind
+the element's content, so a photo filling a card covers it completely —
+measured corner-to-corner spread across such a card face is `0`. Lift it
+with `--cast-surface-z: 2` and the sheen falls on the photo, where the light
+would actually land.
+
+That costs contrast wherever it crosses type. On the demo's muted body text
+a sheen takes it from `5.27:1` to `4.54:1` at `0.07` and `3.92:1` at `0.14`,
+which is below AA. Lift it for media cards, leave it alone for text-heavy
+ones.
 
 **Costs, stated plainly:**
 
@@ -474,5 +486,12 @@ custom properties and fall back to the static shadow.
 
 ## Demo
 
-`index.html`. Serve the folder and open it, then click anywhere to move the
-light.
+`index.html` is the full reference: every property documented with a live
+example, plus a section of article cards, avatars and buttons for seeing how
+it behaves on real content. Serve the folder and open it, then click
+anywhere to move the light.
+
+The library is still the two files at the root. `demo/img/` holds
+placeholder imagery for the documentation page only — generated, not
+photographic, so swap in real photos if you want a truer read on how the
+modelling sits over a picture.
