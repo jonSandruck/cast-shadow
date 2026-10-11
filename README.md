@@ -773,7 +773,7 @@ All but those two came from `scikit-image`'s bundled sample data:
 | `coffee.jpg`, `cat.jpg` | scikit-image sample data |
 | `avatar.jpg` | Rocket launch, scikit-image sample data |
 | `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
-| `lamps.jpg` | Hanging lamp shades, Unsplash, Unsplash License. Resized to 1600×1067 |
+| `lamps.jpg` | Hanging lamp shades, [Unsplash](https://unsplash.com/photos/black-and-brown-pendant-lamp-fmCtPQhQksw), Unsplash License. Resized to 1600×1067 |
 
 **Check the licences yourself before publishing this page anywhere
 public.** NASA imagery is public domain and safe, and the Unsplash
