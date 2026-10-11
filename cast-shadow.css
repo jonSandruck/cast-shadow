@@ -444,6 +444,12 @@
    */
   --cast-surface-z: -1;
 
+  /* Which layer the grain sits on. The same knob room mode has, and the
+     same default: below the content, where a surface texture belongs.
+     Surface mode used to hard-code -1 here, so the one fix a translucent
+     element needs -- lifting the grain -- could not be expressed. */
+  --cast-grain-z: -1;
+
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
      instead of punching through to an ancestor's. */
@@ -517,7 +523,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--cast-grain-z);
   pointer-events: none;
   border-radius: inherit;
   opacity: var(--cast-grain);
@@ -525,6 +531,46 @@
   background-image: var(--cast-grain-image);
   background-size:
     calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
+}
+
+/*
+ * Glass. For a surface whose background is see-through.
+ *
+ * Surface mode isolates the element so its two layers can sit at
+ * z-index -1, above the element's own background but under its content.
+ * That is right for an opaque card and wrong for a translucent one:
+ * mix-blend-mode only blends within its own stacking context, so the
+ * grain's backdrop becomes the element's background alone. As that
+ * background goes transparent there is nothing left to blend with, and
+ * the blend silently degenerates into plain alpha compositing -- the same
+ * failure the page itself hits in room mode.
+ *
+ * Measured on a tile over a mid-grey page, grain's own contribution as
+ * the background's alpha falls from 1 to 0:
+ *
+ *                     RMS            mean shift
+ *   isolated        1.01 -> 3.05    +3.7 -> +13.9
+ *   glass           1.00 -> 1.36    +3.7 ->  +5.2
+ *
+ * At alpha 0 the soft-light grain measured the same as normal blending:
+ * the blend mode had stopped doing anything. That is the "grain gets
+ * louder and lighter as the tile gets clearer" effect.
+ *
+ * Dropping the isolation is only half of it. With nothing isolating them,
+ * layers at -1 paint BEHIND the element's own background -- on an opaque
+ * tile the sheen measured 0.00, gone. So both layers come up above the
+ * background as well. Measured with all three, the sheen matches the
+ * isolated version at every alpha, and an opaque glass tile is identical
+ * to an ordinary one.
+ *
+ * The cost is the same one --cast-surface-z: 2 always carries: both
+ * layers now sit over the content, so they tint the text. And it does
+ * nothing on its own -- it only means something next to surface.
+ */
+[data-cast~="surface"][data-cast~="glass"] {
+  isolation: auto;
+  --cast-surface-z: 2;
+  --cast-grain-z: 9999;
 }
 
 /*

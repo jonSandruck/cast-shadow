@@ -403,6 +403,7 @@ without needing to know which theme is active.
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.2` | Grain opacity |
 | `--cast-grain-size` | `280` | Grain tile size, in px |
+| `--cast-grain-z` | `-1` | Which layer the grain sits on |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
 
 ### The light's height and size reach the face too
@@ -491,6 +492,57 @@ ones.
   pseudo-elements, you can't use it on that element.
 - It sets `isolation: isolate`, which creates a stacking context.
 - It isn't designed to combine with shape mode.
+
+### See-through surfaces: `glass`
+
+```html
+<div class="panel" data-cast="surface edge glass">…</div>
+```
+
+For an element whose background is translucent. Without it, the grain
+gets louder and lighter as the background gets clearer.
+
+That comes from the isolation above. `mix-blend-mode` only blends inside
+its own stacking context, so the grain's backdrop is the element's own
+background and nothing behind it. As that background goes transparent
+there is nothing left to blend with, and the blend quietly turns into
+plain alpha compositing. At alpha 0, `soft-light` grain measured the same
+as `normal` — the blend mode had stopped doing anything.
+
+Grain's own contribution as the background's alpha falls from 1 to 0, on
+a tile over a mid-grey page:
+
+| | grain RMS | mean shift |
+| --- | --- | --- |
+| `surface` | 1.01 → 3.05 | +3.7 → +13.9 |
+| `surface glass` | 1.00 → 1.36 | +3.7 → +5.2 |
+
+`glass` is three settings, and you can write them yourself instead:
+
+```css
+.panel {
+  isolation: auto;       /* let the layers see what's behind */
+  --cast-surface-z: 2;   /* sheen above the background */
+  --cast-grain-z: 9999;  /* grain above the background */
+}
+```
+
+Dropping the isolation alone is not enough. Without it, layers at `-1`
+paint *behind* the element's own background — on an opaque tile the sheen
+measured 0.00. So both layers come up as well. With all three, the sheen
+matches an ordinary surface at every alpha, and an opaque `glass` tile
+looks the same as one without it.
+
+**Costs.** Both layers now sit over the content, so they tint text, the
+same trade as `--cast-surface-z: 2` on a photo card. It does nothing
+without `surface`. And it doesn't frost anything: add your own
+`backdrop-filter` if you want blur.
+
+**One thing CSS can't do.** An element's own drop shadow is clipped to
+outside its box, so you never see the shadow *through* a clear tile.
+Measured on a fully clear tile, the inside read the same as open page
+while the shadow below it was 18 levels darker. Real glass would show
+its shadow through itself.
 
 ## Shape mode
 
