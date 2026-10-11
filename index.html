@@ -97,11 +97,7 @@
     background: color-mix(in srgb, var(--ground) 88%, transparent);
     backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
   }
-  .bar strong {
-    display: inline-block; font-size: 14px; font-weight: 600;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 8px; padding: 5px 11px; --cast-elevation: 8;
-  }
+  .bar strong { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; margin-right: 14px; }
   .bar nav { display: flex; gap: 14px; font-size: 13px; flex-wrap: wrap; }
   .bar nav a { color: var(--muted); text-decoration: none; }
   .bar nav a:hover { color: var(--ink); }
@@ -343,7 +339,7 @@
 </head>
 <body data-cast="room">
 <div class="bar">
-  <strong data-cast>cast-shadow</strong>
+  <strong>cast-shadow</strong>
   <nav>
     <a href="#light">Light</a>
     <a href="#objects">Objects</a>
