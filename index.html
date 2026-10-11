@@ -273,10 +273,6 @@
   .tuner h2 { margin: 0 0 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
   .tuner-head { display: flex; align-items: center; gap: 10px; }
   .tuner-head h2 { margin: 0; }
-  .tuner-hint {
-    margin: 0 auto 0 0; padding-left: 7px; font-size: 13px; font-weight: 500;
-    color: var(--ink); white-space: nowrap;
-  }
   /* Collapsed it should read as a pill, so the radius matches the row. */
   .tuner.collapsed { border-radius: 999px; padding: 10px; }
   .tuner label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; color: var(--muted); }
@@ -316,9 +312,7 @@
   .tuner-col { display: flex; flex-direction: column; }
   .tuner-col .reset { margin-top: auto; }
   .stripped main, .stripped .bar { visibility: hidden; }
-  /* The instruction is the first thing to go when room runs out -- the
-     buttons are the part you cannot reach any other way. */
-  @media (max-width: 560px) { .tuner-hint { display: none; } }
+  .tuner .check + h2 { margin-top: 16px; }
 </style>
 </head>
 <body data-cast="room">
@@ -349,8 +343,8 @@
         <a class="btn" href="#install" data-cast="surface edge" style="--cast-elevation: 30">Get started</a>
         <a class="btn" href="#elevation" data-cast="edge" style="--cast-elevation: 12">See what it does</a>
       </div>
-      <p class="hero-hint">Move your pointer here and the light follows. Further
-        down, click to place it.</p>
+      <p class="hero-hint">Move your pointer and the light follows. To place it
+        with a click instead, open Tune.</p>
     </div>
     <div class="hero-card" data-cast="surface edge">
       <p class="meta">Two files, no build step</p>
@@ -759,8 +753,8 @@
       At <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
       gradient angle means nothing; the sheen used to run at full strength
       there, aimed nowhere. Now the gradient fades as the light comes
-      overhead, and an even wash takes its place. Click right on a card to
-      see it. The rim turns even too: on a solid card it's a bevel tilting
+      overhead, and an even wash takes its place. Put the pointer right on a
+      card to see it. The rim turns even too: on a solid card it's a bevel tilting
       away from the lamp, so it sits just <em>darker</em> than the face
       (<code>&minus;6.7</code>); on glass, light through the pane lights
       the edge from inside, so it glows (<code>+22.6</code>, where it used
@@ -1110,7 +1104,6 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 </main>
 <section class="tuner" id="tuner" aria-label="Lighting controls">
   <div class="tuner-head">
-    <p class="tuner-hint">Click the page to move the light</p>
     <button type="button" id="lamp-toggle" aria-pressed="false">Hide dot</button>
     <button type="button" id="t-collapse" aria-expanded="false" aria-controls="t-body">Tune</button>
   </div>
@@ -1139,6 +1132,11 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   <label for="t-lsize">size <output id="t-lsize-v">350</output></label>
   <input type="range" id="t-lsize" min="20" max="1200" step="10" value="350">
+
+  <label class="check" for="t-place">
+    <input type="checkbox" id="t-place">
+    click to place the light
+  </label>
 
   <h2>Room</h2>
 
@@ -1205,15 +1203,18 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     moveLight(event.clientX, event.clientY);
   });
 
-  // Over the hero the light follows a mouse or pen. Only there, so the
-  // light can be held still while you read a demo further down; leaving
-  // the hero leaves it where it was. Touch has no hover, so a tap places
-  // it as anywhere else. With reduced motion on, nothing follows.
-  const hero = document.getElementById('top');
+  // The light follows a mouse or pen anywhere on the page. Tune's "click to
+  // place the light" turns that off so the light holds still while you
+  // read. Clicks place it either way: while following that changes nothing,
+  // and on touch, with no pointer to follow, it's the only way to move it.
+  // Moving over the tuner doesn't drag the light, so a slider can be
+  // reached without moving it. With reduced motion on, nothing follows.
+  const placeInput = document.getElementById('t-place');
   const still = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frame = 0, pointerX = 0, pointerY = 0;
-  hero.addEventListener('pointermove', (event) => {
-    if (event.pointerType === 'touch' || still.matches) return;
+  document.addEventListener('pointermove', (event) => {
+    if (placeInput.checked || still.matches || event.pointerType === 'touch') return;
+    if (event.target.closest('#tuner')) return;
     pointerX = event.clientX;
     pointerY = event.clientY;
     if (frame) return;
@@ -1288,7 +1289,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   const TUNER_DEFAULTS = {
     temp: '6500', lz: '600', lsize: '350',
     grain: '0.2', size: '280', blend: 'auto',
-    vig: '0.05', pool: '0.05', strip: false,
+    vig: '0.05', pool: '0.05', strip: false, place: false,
   };
 
   const tuner = document.getElementById('tuner');
@@ -1341,6 +1342,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     try {
       localStorage.setItem('cast-shadow-tuner', JSON.stringify({
         temp: tempInput.value, lz, lsize, grain, size, blend, vig, pool,
+        place: placeInput.checked,
       }));
     } catch {}
   }
@@ -1356,13 +1358,14 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       blendInput.value = saved.blend ?? blendInput.value;
       vigInput.value = saved.vig ?? vigInput.value;
       poolInput.value = saved.pool ?? poolInput.value;
+      placeInput.checked = saved.place ?? TUNER_DEFAULTS.place;
     }
   } catch {}
 
   applyTuning();
 
   for (const el of [tempInput, lzInput, lsizeInput, grainInput, sizeInput,
-                   blendInput, vigInput, poolInput, stripInput]) {
+                   blendInput, vigInput, poolInput, stripInput, placeInput]) {
     el.addEventListener('input', applyTuning);
   }
 
@@ -1376,6 +1379,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     vigInput.value = TUNER_DEFAULTS.vig;
     poolInput.value = TUNER_DEFAULTS.pool;
     stripInput.checked = TUNER_DEFAULTS.strip;
+    placeInput.checked = TUNER_DEFAULTS.place;
     applyTuning();
     try { localStorage.removeItem('cast-shadow-tuner'); } catch {}
   });
