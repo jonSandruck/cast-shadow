@@ -30,6 +30,8 @@
     }
     :root:not([data-theme="light"]) [data-cast] {
       --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
+    }
+    :root:not([data-theme="light"]) [data-cast]:not([data-cast~="glass"]) {
       --cast-sheen: 0.07; --cast-grain-blend: overlay;
     }
   }
@@ -41,6 +43,12 @@
   }
   :root[data-theme="dark"] [data-cast] {
     --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
+  }
+  /* Sheen and blend are tuned to the surface, and a dark theme means a dark
+     surface. Glass is the exception: its surface is whatever sits behind
+     it, which doesn't change with the theme, so it keeps the same settings
+     in both. Shadow colour still changes -- the shadow falls on the page. */
+  :root[data-theme="dark"] [data-cast]:not([data-cast~="glass"]) {
     --cast-sheen: 0.07; --cast-grain-blend: overlay;
   }
 
@@ -142,6 +150,13 @@
     font-family: var(--mono); font-size: 12px; color: var(--muted);
   }
   .tile.bare { border: 0; }
+  /* The glass example: a photo behind, so there is something to see through. */
+  .stage.photo { border: 0; background: center / cover url(demo/img/window.jpg); }
+  /* Fully clear. A tint taken from the theme's surface colour made the tiles
+     milky in light mode and nearly invisible in dark (+16.5 L* against -10.1
+     over the same photo), and the backdrop doesn't change with the theme,
+     so neither should the glass. */
+  .tile.clear { background: transparent; }
   .chip { width: 90px; height: 90px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); }
   .chip.pill { width: 180px; border-radius: 999px; }
   .chip.block { border-radius: 6px; }
@@ -554,12 +569,16 @@
       <code>3.4</code> at <code>H&nbsp;=&nbsp;1600</code>.
     </div>
     <div class="note">
-      <strong>An object sitting on the light has no lit side.</strong> At
-      <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
-      gradient angle means nothing. The sheen used to run at full strength
-      there — <code>23.5</code> levels, its maximum — aimed in an
-      arbitrary direction. Obliqueness is zero at that point, so it now
-      measures <code>0.5</code>.
+      <strong>Under the light, the direction goes but the light stays.</strong>
+      At <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
+      gradient angle means nothing; the sheen used to run at full strength
+      there, aimed nowhere. Now the gradient fades as the light comes
+      overhead, and an even wash takes its place. Click right on a card to
+      see it. The rim turns even too: on a solid card it's a bevel tilting
+      away from the lamp, so it sits just <em>darker</em> than the face
+      (<code>&minus;6.7</code>); on glass, light through the pane lights
+      the edge from inside, so it glows (<code>+22.6</code>, where it used
+      to fall to <code>0.0</code>).
     </div>
     <div class="note">
       <strong>Tune by surface, not by theme.</strong> Compositing leaves
@@ -577,6 +596,88 @@
       <code>--cast-surface-z: 2</code>, at the cost of tinting whatever it
       crosses. With <code>edge</code> on as well, the same number lifts the
       rim; see <a href="#content">Real content</a>.
+    </div>
+
+    <h3 id="mode-glass">Glass — for surfaces you can see through</h3>
+    <p>
+      Not a mode on its own: a word you add next to <code>surface</code>
+      when the element's background is translucent. Without it, the grain
+      gets louder and lighter the clearer the background gets.
+    </p>
+    <div class="demo split">
+      <div class="stage photo">
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge</code></figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge glass" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge glass</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface edge glass"</b>&gt;…&lt;/div&gt;
+
+/* or write it yourself */
+.panel {
+  isolation: auto;
+  <b>--cast-surface-z</b>: 2;
+  <b>--cast-grain-z</b>: 9999;
+  <b>--cast-edge-lit</b>: color-mix(in srgb,
+    var(--cast-light-color) 50%, transparent);
+  <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
+  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
+  <b>--cast-grain-blend</b>: soft-light;
+}</code></pre>
+    </div>
+    <div class="note">
+      <strong>Why it happens.</strong> Surface mode isolates the element so
+      its layers can sit under the content. But <code>mix-blend-mode</code>
+      only blends inside its own stacking context, so the grain's only
+      backdrop is the element's own background. As that goes transparent,
+      the blend has nothing to work with and quietly turns into plain
+      alpha. Measured as the background's alpha falls from 1 to 0, grain
+      RMS runs <code>1.01 → 3.05</code> without <code>glass</code> and
+      <code>1.00 → 1.36</code> with it.
+    </div>
+    <div class="note">
+      <strong>It picks the blend too.</strong> Those numbers are with
+      <code>soft-light</code>. Under <code>overlay</code>, the library
+      default, the same fix only gets grain from <code>3.07</code> to
+      <code>2.80</code>: overlay is loud over mid-tones, which is what most
+      photos are. Behind glass the library can't know the backdrop, so
+      <code>glass</code> uses <code>soft-light</code>, whose worst case is
+      half of overlay's.
+    </div>
+    <div class="note">
+      <strong>Don't tune glass by theme.</strong> These tiles are fully
+      clear and skip the page's dark-mode sheen and blend overrides,
+      because what's behind them doesn't change with the theme. Tinted with
+      the theme's surface colour, they measured <code>+18.1</code> L* in
+      light mode and <code>&minus;6.4</code> in dark. Clear, they measure
+      <code>+2.4</code> and <code>+2.6</code>.
+    </div>
+    <div class="note">
+      <strong>Why it's three lines, not one.</strong> Dropping the
+      isolation alone pushes both layers <em>behind</em> the element's own
+      background — on an opaque tile the sheen measured
+      <code>0.00</code>. So they come up above it too. With all three, the
+      sheen and grain on an opaque <code>glass</code> tile match an
+      ordinary one. The cost is the usual one for a lifted layer: it tints
+      the text.
+    </div>
+    <div class="note">
+      <strong>The rim is stronger on purpose.</strong> A see-through face
+      doesn't stand out from what's behind it, so the rim does all the
+      outlining — and real glass is brightest at its edges anyway. The
+      target is the edge an opaque card gets: on the lit side in dark mode,
+      <code>+80.2</code> against a card's <code>+76.5</code>, up from
+      <code>+55.0</code>. Any of it can be overridden with your own class.
+    </div>
+    <div class="note">
+      <strong>It doesn't frost.</strong> Add your own
+      <code>backdrop-filter</code> for blur. And CSS clips an element's own
+      shadow to outside its box, so a clear tile never shows its shadow
+      through itself the way real glass would.
     </div>
 
     <h3 id="mode-edge">Edge — a directional rim</h3>
@@ -619,14 +720,17 @@
       <code>border: 0</code> where edge mode is on.
     </div>
     <div class="note">
-      <strong>The rim fades with angle, not with distance.</strong> It
-      scales by the same obliqueness term as the sheen, because an edge
-      lit from straight above has no bright side and no dark side — at
-      <code>d&nbsp;=&nbsp;250</code> the rim delta runs <code>45.3</code>
-      levels with the light at <code>H&nbsp;=&nbsp;200</code> and
-      <code>7.6</code> at <code>H&nbsp;=&nbsp;1600</code>. Distance fade
-      stays off: a broad soft area crossing a fade threshold reads as
-      light, a hairline reads as flicker.
+      <strong>The rim's direction fades with angle; its light doesn't.</strong>
+      An edge lit from straight above has no bright side and no dark side,
+      so the directional pair scales by obliqueness — at
+      <code>d&nbsp;=&nbsp;250</code> it runs <code>45.3</code> levels with
+      the light at <code>H&nbsp;=&nbsp;200</code> and <code>7.6</code> at
+      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even ring takes over
+      in <code>--cast-edge-overhead</code>: just darker than the face on a
+      solid tile, whose bevel tilts away from an overhead lamp, and lit on
+      glass. Distance fade stays
+      off: a broad soft area crossing a fade threshold reads as light, a
+      hairline reads as flicker.
     </div>
     <div class="note">
       It does not combine with <code>shape</code>: <code>inset</code>
@@ -861,6 +965,7 @@
         <tr><td><code>--cast-edge-width</code></td><td><code>1</code></td><td>Rim width, in px</td></tr>
         <tr><td><code>--cast-edge-lit</code></td><td>30% of the light's colour</td><td>Colour of the lit rim</td></tr>
         <tr><td><code>--cast-edge-shade</code></td><td><code>rgb(0 0 0 / 0.34)</code></td><td>Colour of the shaded rim</td></tr>
+        <tr><td><code>--cast-edge-overhead</code></td><td>29% of the shade colour</td><td>Rim colour with the light straight above</td></tr>
       </tbody>
     </table></div>
 
@@ -874,7 +979,7 @@
         <tr><td><code>--cast-grain</code></td><td><code>0.2</code></td><td>Grain strength</td></tr>
         <tr><td><code>--cast-grain-size</code></td><td><code>280</code></td><td>Grain scale, in px</td></tr>
         <tr><td><code>--cast-grain-blend</code></td><td><code>overlay</code></td><td>How the grain composites</td></tr>
-        <tr><td><code>--cast-grain-z</code></td><td><code>-1</code>, <code>9999</code> on body</td><td>Layer the grain sits on</td></tr>
+        <tr><td><code>--cast-grain-z</code></td><td><code>-1</code>, <code>9999</code> on body</td><td>Layer the grain sits on, in room and surface mode</td></tr>
         <tr><td><code>--cast-grain-image</code></td><td>fractal noise</td><td>Set to <code>none</code> to drop it</td></tr>
       </tbody>
     </table></div>

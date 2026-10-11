@@ -184,13 +184,32 @@
    * light, so --cast-ux and --cast-uy are both zero and the gradient angle
    * is whatever atan2(0, 0) returns. The sheen was at full strength there,
    * pointing nowhere in particular; measured spread was 23.5 levels, its
-   * maximum. Obliqueness is zero at that point, so now it fades out
-   * instead. A face directly under a light has no lit side.
+   * maximum. Obliqueness is zero at that point, so the directional part
+   * fades out there. Directly under a light, neither side of a face is
+   * brighter than the other.
    */
   --cast-oblique: min(
     calc(var(--cast-d) / max(var(--cast-light-z) - var(--cast-elevation), 1)),
     1
   );
+
+  /*
+   * The other half of the same angle: how nearly overhead the light is.
+   * 1 directly above, 0 at 45 degrees and beyond.
+   *
+   * Obliqueness alone made "no direction" mean "no light". Every face
+   * effect scaled by it, so as the light arrived the sheen and rim faded
+   * to exactly zero -- the light vanished where it is strongest, while
+   * room mode's pool was brightest in the same spot. Measured on a clear
+   * glass tile, the lit rim ran +24.7 far from the light and 0.0 under it.
+   *
+   * So the directional effects hand over to even ones as this rises:
+   * the face gets a uniform wash, and the rim an even ring -- dimmer than
+   * the face on a solid object, lit on glass; see --cast-edge-overhead.
+   * The total amount of light stays roughly steady; only its direction
+   * goes.
+   */
+  --cast-overhead: calc(1 - var(--cast-oblique));
 
   --cast-alpha: calc(
     var(--cast-alpha-near) + var(--cast-t) * (var(--cast-alpha-far) - var(--cast-alpha-near))
@@ -282,6 +301,26 @@
   );
 
   /*
+   * The rim's colour when the light is straight above, which takes over
+   * from the directional pair as the light comes overhead.
+   *
+   * On a solid object the rim is a bevel: the rounded edge between top
+   * and side. Lit from straight above, the top faces the light squarely
+   * and the bevel tilts away from it, so the bevel is evenly lit but
+   * DIMMER than the face. At a 45 degree bevel it gets cos 45 = 0.71 of
+   * the face's light, so it reads about 29% of the way to the full dark
+   * rim. An earlier version drew a bright ring here, which made the edge
+   * brighter than the face under the lamp -- wrong for anything solid.
+   *
+   * Glass swaps in the lit colour: light passes through the pane and
+   * catches the inside of the edge, so there the bright ring is right.
+   */
+  --cast-edge-overhead: color-mix(in srgb, var(--cast-edge-shade) 29%, transparent);
+  --cast-rim-ring: color-mix(
+    in srgb, var(--cast-edge-overhead) calc(var(--cast-overhead) * 100%), transparent
+  );
+
+  /*
    * Pair this with a border and the edge gets drawn twice. The rim paints
    * just inside the border box, so a border sits immediately outside it.
    * Measured across a card's left edge in light mode, luminance ran
@@ -299,6 +338,7 @@
     inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
       var(--cast-rim-shade),
+    inset 0 0 0 calc(var(--cast-edge-width) * 1px) var(--cast-rim-ring),
     var(--cast-drop);
 }
 
@@ -333,7 +373,8 @@
   box-shadow:
     inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
-      var(--cast-rim-shade);
+      var(--cast-rim-shade),
+    inset 0 0 0 calc(var(--cast-edge-width) * 1px) var(--cast-rim-ring);
 }
 
 /*
@@ -444,6 +485,12 @@
    */
   --cast-surface-z: -1;
 
+  /* Which layer the grain sits on. The same knob room mode has, and the
+     same default: below the content, where a surface texture belongs.
+     Surface mode used to hard-code -1 here, so the one fix a translucent
+     element needs -- lifting the grain -- could not be expressed. */
+  --cast-grain-z: -1;
+
   position: relative;
   /* Keeps the negative z-index layer above this element's own background
      instead of punching through to an ancestor's. */
@@ -484,6 +531,12 @@
    */
   --cast-sheen-alpha: calc(var(--cast-sheen) * var(--cast-oblique) * (1 - var(--cast-t)));
   --cast-shade-alpha: calc(var(--cast-shade) * var(--cast-oblique) * (1 - var(--cast-t)));
+
+  /* The face's share of the light that has no direction. Same strength
+     and falloff as the sheen, so as the gradient fades overhead an even
+     wash of the light's colour takes its place. No shade counterpart:
+     nothing on a face is turned away from a light directly above it. */
+  --cast-wash-alpha: calc(var(--cast-sheen) * var(--cast-overhead) * (1 - var(--cast-t)));
 }
 
 [data-cast~="surface"]::before {
@@ -493,6 +546,11 @@
   z-index: var(--cast-surface-z);
   pointer-events: none;
   border-radius: inherit;
+
+  /* Painted under the gradient, as background colour does. */
+  background-color: color-mix(
+    in srgb, var(--cast-light-color) calc(var(--cast-wash-alpha) * 100%), transparent
+  );
 
   /* Each end fades to a transparent stop of its OWN colour. Fading white
      straight into black would run the midpoint through grey. */
@@ -517,7 +575,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--cast-grain-z);
   pointer-events: none;
   border-radius: inherit;
   opacity: var(--cast-grain);
@@ -525,6 +583,92 @@
   background-image: var(--cast-grain-image);
   background-size:
     calc(var(--cast-grain-size) * 1px) calc(var(--cast-grain-size) * 1px);
+}
+
+/*
+ * Glass. For a surface whose background is see-through.
+ *
+ * Surface mode isolates the element so its two layers can sit at
+ * z-index -1, above the element's own background but under its content.
+ * That is right for an opaque card and wrong for a translucent one:
+ * mix-blend-mode only blends within its own stacking context, so the
+ * grain's backdrop becomes the element's background alone. As that
+ * background goes transparent there is nothing left to blend with, and
+ * the blend silently degenerates into plain alpha compositing -- the same
+ * failure the page itself hits in room mode.
+ *
+ * Measured on a tile over a mid-grey page, grain's own contribution as
+ * the background's alpha falls from 1 to 0, both with soft-light (which
+ * glass now sets; see the blend note below):
+ *
+ *                     RMS            mean shift
+ *   isolated        1.01 -> 3.05    +3.7 -> +13.9
+ *   glass           1.00 -> 1.36    +3.7 ->  +5.2
+ *
+ * At alpha 0 the soft-light grain measured the same as normal blending:
+ * the blend mode had stopped doing anything. That is the "grain gets
+ * louder and lighter as the tile gets clearer" effect.
+ *
+ * Dropping the isolation is only half of it. With nothing isolating them,
+ * layers at -1 paint BEHIND the element's own background -- on an opaque
+ * tile the sheen measured 0.00, gone. So both layers come up above the
+ * background as well. Measured with all three, the sheen matches the
+ * isolated version at every alpha, and an opaque glass tile's sheen and
+ * grain are identical to an ordinary one's. Its rim is stronger, by
+ * design; see below.
+ *
+ * The cost is the same one --cast-surface-z: 2 always carries: both
+ * layers now sit over the content, so they tint the text. And it does
+ * nothing on its own -- it only means something next to surface.
+ *
+ * It also strengthens the rim. A see-through face no longer stands out
+ * from what is behind it, so the rim is left doing all the outlining --
+ * and real glass is brightest at its edges anyway, because light that
+ * enters the face is trapped inside the pane and leaks out at the edge.
+ * The target is parity: the same edge definition an opaque card gets.
+ * Over the demo's window photograph, with the light up and to the left:
+ *
+ *                         lit side    shade side
+ *   glass, default rim      +55.0       -42.1   (dark / light theme)
+ *   glass, this rim         +80.2       -54.7
+ *   opaque card             +76.5       -57.8
+ *
+ * Specificity is deliberately one class, not two. :where() zeroes the
+ * surface half, so this outranks the surface and edge defaults it has to
+ * replace -- it comes after both -- but an author's own class, loaded
+ * after the library, still wins. Written as two attribute selectors it
+ * would have beaten .panel { --cast-edge-lit: ... } too, and every value
+ * here would have needed !important to tune.
+ */
+:where([data-cast~="surface"])[data-cast~="glass"] {
+  isolation: auto;
+  --cast-surface-z: 2;
+  --cast-grain-z: 9999;
+
+  --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
+  --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  /* Under the lamp, a solid edge dims; a glass one glows, because light
+     through the pane catches the inside of the edge. */
+  --cast-edge-overhead: var(--cast-edge-lit);
+
+  /*
+   * Elsewhere the blend is picked per surface, because overlay and
+   * soft-light trade places with the ground's lightness. Behind glass the
+   * ground is whatever happens to be back there, which the library can't
+   * know -- so pick the blend whose worst case is least bad. Grain's own
+   * contribution on a glass tile at alpha 0:
+   *
+   *   backdrop       overlay            soft-light
+   *   dark           RMS 0.88  +3.5     RMS 1.37  +5.2
+   *   mid-tone       RMS 2.80  +11.1    RMS 1.36  +5.2
+   *   light          RMS 0.94  +3.2     RMS 0.50  +1.7
+   *
+   * overlay is a contrast boost centred on mid-grey: quiet over dark and
+   * light, loud over mid-tones, which is what most photographs are. So
+   * soft-light, whose worst case is half of overlay's.
+   */
+  --cast-grain-blend: soft-light;
 }
 
 /*

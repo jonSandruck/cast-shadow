@@ -191,6 +191,7 @@ from it.
 | `--cast-edge-width` | `1` | Rim width, in px |
 | `--cast-edge-lit` | 30% of the light's colour | Colour of the lit rim |
 | `--cast-edge-shade` | `rgb(0 0 0 / 0.34)` | Colour of the shaded rim |
+| `--cast-edge-overhead` | 29% of the shade colour | Rim colour with the light straight above |
 
 Two inset shadows reusing the same vector, composed into the same
 `box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
@@ -229,12 +230,21 @@ That's deliberate: those are broad soft areas where falloff reads as light,
 but a hairline crossing a fade threshold reads as flicker. Multiply by
 `(1 - var(--cast-t))` yourself if you want it to fall off.
 
-**It does fade with angle**, by the same obliqueness term as the sheen —
-an edge lit from straight above has no bright side and no dark side.
-Measured on a mid-grey tile at `d = 250`, rim delta runs 45.3 levels with
-the light at `H = 200` and 7.6 at `H = 1600`. That is a different curve
-from distance fade and does not bring the flicker with it: obliqueness
-moves smoothly with position, so the hairline never steps.
+**Its direction fades with angle**, by the same obliqueness term as the
+sheen — an edge lit from straight above has no bright side and no dark
+side. Measured on a mid-grey tile at `d = 250`, the directional rim runs
+45.3 levels with the light at `H = 200` and 7.6 at `H = 1600`. That is a
+different curve from distance fade and does not bring the flicker with
+it: obliqueness moves smoothly with position, so the hairline never steps.
+
+**The light doesn't vanish either.** As the direction fades, an even ring
+takes over, in `--cast-edge-overhead`. On a solid object the rim is a
+bevel, the rounded edge between top and side. Lit from straight above,
+the top faces the light squarely and the bevel tilts away, so the bevel
+is evenly lit but *dimmer* than the face: at a 45 degree bevel it gets
+cos 45 = 0.71 of the face's light, so the default is 29% of the dark rim
+colour. On glass it's the lit colour instead — see `glass` below. Numbers
+are under *overhead* in surface mode.
 
 It is applied by mixing whatever colour you set toward transparent rather
 than by owning the alpha, so `--cast-edge-lit` and `--cast-edge-shade`
@@ -403,6 +413,7 @@ without needing to know which theme is active.
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.2` | Grain opacity |
 | `--cast-grain-size` | `280` | Grain tile size, in px |
+| `--cast-grain-z` | `-1` | Which layer the grain sits on |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
 
 ### The light's height and size reach the face too
@@ -417,8 +428,9 @@ Two terms fix that.
 **Obliqueness** is `d / (H - h)`: how far the light is off to one side
 compared with how far up. It is 0 directly overhead, 1 at 45 degrees, and
 clamps there because the look saturates well before the ratio does. The
-sheen and the rim both scale by it, so a face lit from straight above has
-no lit side and one lit from a low raking angle has a strong one.
+directional parts of the sheen and the rim both scale by it, so a face lit
+from straight above has no brighter side and one lit from a low raking
+angle has a strong one.
 
 Measured on a mid-grey tile, sheen spread in levels of luminance, at the
 default light height of 600:
@@ -434,6 +446,49 @@ light, so `--cast-ux` and `--cast-uy` are both zero and the gradient angle
 is whatever `atan2(0, 0)` returns. The sheen used to be at full strength
 there — 23.5 levels, its maximum — pointing nowhere in particular. Now it
 is 0.5.
+
+**Overhead** is the other half of the same angle: `1 - obliqueness`, 1
+straight above and 0 from 45 degrees out. It exists because obliqueness
+alone was half a fix. Every face effect scaled by it, so as the light
+arrived over a surface the sheen and the rim faded to exactly zero — the
+light vanished where it is strongest, right where room mode's pool is
+brightest. Directly under a lamp, neither side of a face is brighter than
+the other, but the face is still lit.
+
+So as the light comes overhead, the directional effects hand over to even
+ones: a uniform wash on the face, and an even ring on the rim. The amount
+of light stays about the same; only its direction goes.
+
+The ring is where solid and glass differ. A solid tile's edge is a bevel
+tilting away from an overhead light, so it ends up slightly *darker* than
+the face. A glass tile's edge glows, because light through the pane
+catches the inside of it. Rim delta against the face, over mid-grey:
+
+| light distance | solid: face L\* | solid: rim | glass: face L\* | glass: rim |
+| --- | --- | --- | --- | --- |
+| 900 | 67.5 | +9.2 / −21.1 | 49.0 | +24.7 / −21.2 |
+| 300 | 69.0 | +1.9 / −14.0 | 51.6 | +20.5 / −0.9 |
+| 0, before any of this | 67.6 | 0.0 / 0.0 | 48.7 | 0.0 / 0.0 |
+| 0, now | 72.1 | −6.7 / −6.7 | 56.2 | +22.6 / +22.6 |
+
+An earlier version of this change drew the lit ring on everything, which
+put a solid tile's edge *brighter* than its face under the lamp. That's
+right for glass and wrong for anything you can't see through.
+
+What this changes on a real page:
+
+- **Light mode, pale surfaces:** the face doesn't change — a white wash on
+  near-white has no headroom — but the edge comes back. Under the lamp a
+  pale card's rim used to measure +0.4, gone; now it's −8.7 all round.
+- **Dark mode:** a card under the lamp lifts about +7 L\*, and its edge
+  sits just darker than the face. Things with their own background on that
+  card, like code chips, don't lift, so they stand out a little more there.
+- **Far from the light:** nothing. With the light off to one side, every
+  viewport of the demo was pixel-identical.
+- **Reduced motion and no JavaScript:** the static fallback puts the light
+  at a middling distance, inside 45 degrees, so it picks up a little of
+  both. On a dark card, +1.1 L\* on the face.
+
 
 **Source size** sets `--cast-sheen-reach`, the width of the terminator. A
 small hard source draws a tight, high-contrast falloff; a big soft one
@@ -491,6 +546,109 @@ ones.
   pseudo-elements, you can't use it on that element.
 - It sets `isolation: isolate`, which creates a stacking context.
 - It isn't designed to combine with shape mode.
+
+### See-through surfaces: `glass`
+
+```html
+<div class="panel" data-cast="surface edge glass">…</div>
+```
+
+For an element whose background is translucent. Without it, the grain
+gets louder and lighter as the background gets clearer.
+
+That comes from the isolation above. `mix-blend-mode` only blends inside
+its own stacking context, so the grain's backdrop is the element's own
+background and nothing behind it. As that background goes transparent
+there is nothing left to blend with, and the blend quietly turns into
+plain alpha compositing. At alpha 0, `soft-light` grain measured the same
+as `normal` — the blend mode had stopped doing anything.
+
+Grain's own contribution as the background's alpha falls from 1 to 0, on
+a tile over a mid-grey page, with `soft-light` blending:
+
+| | grain RMS | mean shift |
+| --- | --- | --- |
+| `surface` | 1.01 → 3.05 | +3.7 → +13.9 |
+| `surface glass` | 1.00 → 1.36 | +3.7 → +5.2 |
+
+**`glass` also picks the blend, and that matters as much as the rest.**
+Under `overlay`, the library default, the same fix only takes the grain
+from RMS 3.07 to 2.80. `overlay` is a contrast boost centred on mid-grey,
+so it's quiet over dark and light backdrops and loud over mid-tones —
+which is what most photographs are. Grain on a glass tile at alpha 0:
+
+| backdrop | `overlay` | `soft-light` |
+| --- | --- | --- |
+| dark | RMS 0.88, +3.5 | RMS 1.37, +5.2 |
+| mid-tone | RMS 2.80, +11.1 | RMS 1.36, +5.2 |
+| light | RMS 0.94, +3.2 | RMS 0.50, +1.7 |
+
+Everywhere else the blend is picked per surface. Behind glass the surface
+is whatever sits back there, which the library can't know, so `glass`
+takes the blend whose worst case is better: `soft-light`, at half of
+`overlay`'s.
+
+`glass` is seven settings, and you can write them yourself instead:
+
+```css
+.panel {
+  isolation: auto;       /* let the layers see what's behind */
+  --cast-surface-z: 2;   /* sheen above the background */
+  --cast-grain-z: 9999;  /* grain above the background */
+
+  /* a stronger rim, to match an opaque card's */
+  --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
+  --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  /* under the lamp, light through the pane lights the inside of the edge */
+  --cast-edge-overhead: var(--cast-edge-lit);
+
+  --cast-grain-blend: soft-light;  /* steady over any backdrop */
+}
+```
+
+Dropping the isolation alone is not enough. Without it, layers at `-1`
+paint *behind* the element's own background — on an opaque tile the sheen
+measured 0.00. So both layers come up as well. With all three, the sheen
+matches an ordinary surface at every alpha, and so does the grain on an
+opaque `glass` tile.
+
+**The rim is stronger on purpose.** A see-through face doesn't stand out
+from what's behind it, so the rim does all the outlining. Real glass is
+also brightest at its edges: light that enters the face gets trapped
+inside the pane and leaks out at the edge. The target is the same edge
+definition an opaque card gets. Over the demo's window photograph:
+
+| | lit side, dark theme | shade side, light theme |
+| --- | --- | --- |
+| glass, default rim | +55.0 | −42.1 |
+| glass, stronger rim | +80.2 | −54.7 |
+| opaque card | +76.5 | −57.8 |
+
+**Don't tune glass by theme.** A dark theme usually means a dark surface,
+so it's natural to switch sheen or blend with the theme. Glass is the
+exception: its surface is the backdrop, which doesn't change with the
+theme. The demo tinted its glass tiles with the theme's surface colour
+and lost the symmetry badly — over the same photo, +18.1 L* in light
+mode against −6.4 in dark. Clear tiles with no per-theme overrides land
+at +2.4 and +2.6. If you want a tint, pick one per backdrop, not per
+theme.
+
+**Your own CSS wins.** `glass` is written with the specificity of one
+class, so a class of yours loaded after the library overrides any of the
+seven. An earlier version used two attribute selectors and beat
+`.panel { --cast-surface-z: 1 }`; that's fixed.
+
+**Costs.** Both layers now sit over the content, so they tint text, the
+same trade as `--cast-surface-z: 2` on a photo card. It does nothing
+without `surface`. And it doesn't frost anything: add your own
+`backdrop-filter` if you want blur.
+
+**One thing CSS can't do.** An element's own drop shadow is clipped to
+outside its box, so you never see the shadow *through* a clear tile.
+Measured on a fully clear tile, the inside read the same as open page
+while the shadow below it was 18 levels darker. Real glass would show
+its shadow through itself.
 
 ## Shape mode
 
@@ -601,10 +759,11 @@ anywhere to move the light.
 The library is still the two files at the root. `demo/img/` holds
 photographs for the documentation page only, chosen for luminance spread
 because that is what stresses the modelling: a bright portrait at mean 118,
-a mid-tone still life at 104, and the Hubble deep field at 20.
+a mid-tone still life at 104, and the Hubble deep field at 20. One more,
+a patterned window, sits behind the glass example so there is something
+to see through.
 
-They were taken from `scikit-image`'s bundled sample data, which is where
-they came from originally:
+All but the window came from `scikit-image`'s bundled sample data:
 
 | File | Source |
 | --- | --- |
@@ -612,9 +771,11 @@ they came from originally:
 | `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
 | `coffee.jpg`, `cat.jpg` | scikit-image sample data |
 | `avatar.jpg` | Rocket launch, scikit-image sample data |
+| `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
 
 **Check the licences yourself before publishing this page anywhere
-public.** NASA imagery is public domain and safe; the scikit-image samples
-are distributed for use with that project and I have not verified their
-terms for other uses. Swapping in your own photos is a one-line change per
+public.** NASA imagery is public domain and safe, and the Unsplash
+License allows free use without attribution, though the credit above is
+good manners. The scikit-image samples are distributed for use with that
+project and I have not verified their terms for other uses. Swapping in your own photos is a one-line change per
 card.
