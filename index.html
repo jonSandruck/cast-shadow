@@ -212,14 +212,9 @@
   /* Plain lit page, so the shadows are the whole show. Tall enough to give
      the pointer room to roam. */
   .hero {
-    /* minmax(0, ...): a bare 1fr won't shrink below its widest content, and the
-       code card's long lines would push the whole hero off a phone screen. */
-    display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: center;
+    display: grid; align-items: center;
     min-height: min(560px, 70vh); padding: 8px 0 24px;
   }
-  /* Side by side only once the code card's longest line fits its column;
-     below that the card stacks under the text and gets the full width. */
-  @media (min-width: 1040px) { .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   /* A logo has to stand out in both themes; the surface colour vanishes into the page. */
   .hero-logo { display: block; width: 48px; height: 64px; margin-bottom: 26px; fill: var(--lamp); }
   .hero h1 { margin-bottom: 16px; }
@@ -227,12 +222,6 @@
   .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; }
   .hero-actions .btn { text-decoration: none; display: inline-block; font-size: 15px; padding: 11px 20px; }
   .hero-hint { margin: 22px 0 0; font-size: 13px; color: var(--muted); text-wrap: pretty; }
-  .hero-card {
-    background: var(--surface); border-radius: 16px; padding: 20px 22px;
-    --cast-elevation: 20;
-  }
-  .hero-card .meta { margin: 0 0 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  .hero-card pre { background: none; border: 0; padding: 0; font-size: 13px; }
 
   /* ---- Article cards: the real-content test -------------------------- */
   .cards {
@@ -381,13 +370,6 @@
       </div>
       <p class="hero-hint">Move your pointer and the light follows. To place it
         with a click instead, open Tune.</p>
-    </div>
-    <div class="hero-card" data-cast="surface edge">
-      <p class="meta">Two files, no build step</p>
-      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
-&lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;
-
-&lt;div <b>data-cast</b>&gt;…&lt;/div&gt;</code></pre>
     </div>
   </header>
 
