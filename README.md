@@ -751,10 +751,10 @@ custom properties and fall back to the static shadow.
 
 ## Demo
 
-`index.html` is the full reference: every property documented with a live
-example, plus a section of article cards, avatars and buttons for seeing how
-it behaves on real content. Serve the folder and open it, then click
-anywhere to move the light.
+`index.html` opens with a small made-up landing page that uses every mode at
+once, then shows each capability with a live example and its code, then gets
+technical: install, how it works, and the full reference. Serve the folder
+and open it, then click anywhere to move the light.
 
 The library is still the two files at the root. `demo/img/` holds
 photographs for the documentation page only, chosen for luminance spread

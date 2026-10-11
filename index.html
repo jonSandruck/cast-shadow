@@ -62,6 +62,10 @@
 
   .wrap { max-width: 1060px; margin: 0 auto; padding-inline: 24px; }
 
+  /* Anchor jumps land below the fixed bar. The script replaces this with
+     the bar's real height, which wraps to 180px on a phone. */
+  html { scroll-padding-top: 76px; }
+
   /* ---- Fixed bar ---------------------------------------------------- */
   .bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 30;
@@ -95,11 +99,11 @@
   }
   h2 {
     font-weight: 700; font-size: clamp(22px, 3.2vw, 30px); line-height: 1.15;
-    letter-spacing: -0.02em; margin: 0 0 10px; scroll-margin-top: 120px;
+    letter-spacing: -0.02em; margin: 0 0 10px;
   }
   h3 {
     font-size: 17px; font-weight: 650; letter-spacing: -0.01em;
-    margin: 34px 0 8px; scroll-margin-top: 120px;
+    margin: 34px 0 8px;
   }
   .lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 62ch; margin: 0 0 16px; }
   p { max-width: 68ch; }
@@ -1267,6 +1271,12 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 
   const shadows = castShadow();
   const root = document.documentElement;
+
+  // Keep anchor jumps clear of the fixed bar at whatever height it wraps to.
+  const bar = document.querySelector('.bar');
+  new ResizeObserver(() => {
+    root.style.scrollPaddingTop = `${bar.offsetHeight + 16}px`;
+  }).observe(bar);
 
   document.addEventListener('click', (event) => {
     // Links and controls should do their own job, not move the light.
