@@ -66,6 +66,29 @@
      the bar's real height, which wraps to 180px on a phone. */
   html { scroll-padding-top: 76px; }
 
+  /* ---- Content column and subnav ------------------------------------ */
+  /* One reading width for everything below the hero, so paragraphs, demos
+     and panels share both edges. The subnav takes the space to the right
+     once there is room for it. */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .subnav { display: none; }
+  @media (min-width: 1000px) {
+    .layout { grid-template-columns: minmax(0, 640px) 200px; justify-content: space-between; gap: 56px; }
+    .content p, .content .note { max-width: none; }
+    .subnav {
+      display: block; position: sticky; top: calc(var(--bar-h, 60px) + 26px); align-self: start;
+      max-height: calc(100vh - var(--bar-h, 60px) - 130px); overflow-y: auto;
+      margin-top: 110px; font-size: 13px; line-height: 1.4;
+    }
+  }
+  .subnav a { display: block; padding: 4px 0 4px 12px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+  .subnav a:hover { color: var(--ink); }
+  .subnav a[aria-current] { color: var(--ink); border-left-color: var(--lamp); }
+  .subnav .subnav-top { font-weight: 650; color: var(--ink); margin-top: 14px; }
+  .subnav .subnav-top:first-child { margin-top: 0; }
+  .subnav ul { list-style: none; margin: 0; padding: 0; }
+  .subnav li a { padding-left: 22px; }
+
   /* ---- Fixed bar ---------------------------------------------------- */
   .bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 30;
@@ -153,7 +176,9 @@
   .demo {
     display: grid; grid-template-columns: 1fr; gap: 20px; margin: 22px 0 0;
   }
-  @media (min-width: 860px) { .demo.split { grid-template-columns: 1fr 1fr; align-items: center; } }
+  /* In the reading column a stage and its code stack, each at full width.
+     A pair of figures still sits side by side once both fit. */
+  @media (min-width: 600px) { .demo.split:has(> figure) { grid-template-columns: 1fr 1fr; align-items: center; } }
   .stage {
     display: flex; gap: 34px; flex-wrap: wrap; align-items: center;
     justify-content: center; padding: 34px 20px; border-radius: 12px;
@@ -211,7 +236,7 @@
 
   /* ---- Article cards: the real-content test -------------------------- */
   .cards {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
     gap: 30px; margin-top: 24px;
   }
   .article {
@@ -366,6 +391,8 @@
     </div>
   </header>
 
+  <div class="layout">
+    <div class="content">
   <!-- ================= THE LIGHT ================= -->
   <section class="section" id="light">
     <p class="kicker">What it does</p>
@@ -982,7 +1009,7 @@
     <p class="kicker">Use it</p>
     <h2>Reference</h2>
 
-    <h3>The light</h3>
+    <h3 id="ref-light">The light</h3>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
@@ -994,7 +1021,7 @@
       </tbody>
     </table></div>
 
-    <h3>Shadow</h3>
+    <h3 id="ref-shadow">Shadow</h3>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
@@ -1006,7 +1033,7 @@
       </tbody>
     </table></div>
 
-    <h3>Surface</h3>
+    <h3 id="ref-surface">Surface</h3>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
@@ -1017,7 +1044,7 @@
       </tbody>
     </table></div>
 
-    <h3>Edge</h3>
+    <h3 id="ref-edge">Edge</h3>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
@@ -1028,7 +1055,7 @@
       </tbody>
     </table></div>
 
-    <h3>Room and grain</h3>
+    <h3 id="ref-room">Room and grain</h3>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
@@ -1043,7 +1070,7 @@
       </tbody>
     </table></div>
 
-    <h3>Written by the script</h3>
+    <h3 id="ref-script">Written by the script</h3>
     <p>Three unitless numbers per element. It makes no styling decision.</p>
     <div class="scroller"><table>
       <thead><tr><th>Property</th><th>Range</th><th>Meaning</th></tr></thead>
@@ -1054,7 +1081,7 @@
       </tbody>
     </table></div>
 
-    <h3>JavaScript API</h3>
+    <h3 id="ref-api">JavaScript API</h3>
     <p>Only needed if you want to configure something.</p>
     <pre><code>import { castShadow } from './cast-shadow.js';
 
@@ -1075,7 +1102,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       anything.
     </div>
 
-    <h3>Performance</h3>
+    <h3 id="ref-performance">Performance</h3>
     <div class="note">
       <strong>Two scroll reads a frame.</strong> Geometry is measured once and cached in document space. The scroll path reads <code>scrollX</code> and <code>scrollY</code> a single time and does pure arithmetic — no layout reads, no thrash.
     </div>
@@ -1086,7 +1113,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       <strong>It degrades to a shadow.</strong> Under <code>prefers-reduced-motion</code> the script stops writing and the stylesheet falls back to a static shadow. The same applies if the script never runs at all.
     </div>
 
-    <h3>Known limitations</h3>
+    <h3 id="ref-limits">Known limitations</h3>
     <div class="note">
       <strong>Scrolling sub-containers.</strong> Elements inside their own
       scroll container are positioned against the document, so their
@@ -1105,7 +1132,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       second source.
     </div>
 
-    <h3>Browser support</h3>
+    <h3 id="ref-support">Browser support</h3>
     <p>
       Needs <code>@property</code>, <code>atan2()</code>,
       <code>color-mix()</code>, <code>IntersectionObserver</code> and
@@ -1114,6 +1141,41 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       back to the static shadow.
     </p>
   </section>
+    </div>
+    <nav class="subnav" aria-label="On this page">
+      <a class="subnav-top" href="#light">The light</a>
+      <ul>
+        <li><a href="#light-position">Position</a></li>
+        <li><a href="#light-height">Height</a></li>
+        <li><a href="#light-size">Size</a></li>
+        <li><a href="#light-colour">Colour</a></li>
+        <li><a href="#mode-room">Room light</a></li>
+      </ul>
+      <a class="subnav-top" href="#objects">Objects</a>
+      <ul>
+        <li><a href="#elevation">Elevation</a></li>
+        <li><a href="#mode-shape">Shape</a></li>
+        <li><a href="#mode-surface">Surface</a></li>
+        <li><a href="#mode-edge">Edge</a></li>
+        <li><a href="#photos">Photos and media</a></li>
+        <li><a href="#mode-glass">Glass</a></li>
+      </ul>
+      <a class="subnav-top" href="#install">Get started</a>
+      <a class="subnav-top" href="#reference">Reference</a>
+      <ul>
+        <li><a href="#ref-light">The light</a></li>
+        <li><a href="#ref-shadow">Shadow</a></li>
+        <li><a href="#ref-surface">Surface</a></li>
+        <li><a href="#ref-edge">Edge</a></li>
+        <li><a href="#ref-room">Room and grain</a></li>
+        <li><a href="#ref-script">Written by the script</a></li>
+        <li><a href="#ref-api">JavaScript API</a></li>
+        <li><a href="#ref-performance">Performance</a></li>
+        <li><a href="#ref-limits">Known limitations</a></li>
+        <li><a href="#ref-support">Browser support</a></li>
+      </ul>
+    </nav>
+  </div>
 
 </main>
 <section class="tuner" id="tuner" aria-label="Lighting controls">
@@ -1203,7 +1265,25 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   const bar = document.querySelector('.bar');
   new ResizeObserver(() => {
     root.style.scrollPaddingTop = `${bar.offsetHeight + 16}px`;
+    root.style.setProperty('--bar-h', `${bar.offsetHeight}px`);
   }).observe(bar);
+
+  // ---- Subnav: mark the last heading that has scrolled under the bar ----
+  const spyLinks = [...document.querySelectorAll('.subnav a')];
+  const spyTargets = spyLinks.map((a) => document.getElementById(a.hash.slice(1)));
+  let spyFrame = 0;
+  function spy() {
+    spyFrame = 0;
+    const line = bar.offsetHeight + 24;
+    let current = 0;
+    spyTargets.forEach((target, i) => { if (target.getBoundingClientRect().top <= line) current = i; });
+    spyLinks.forEach((a, i) => {
+      if (i === current) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('scroll', () => { if (!spyFrame) spyFrame = requestAnimationFrame(spy); }, { passive: true });
+  spy();
 
   function moveLight(x, y) {
     root.style.setProperty('--cast-light-x', `${(x / window.innerWidth) * 100}%`);
