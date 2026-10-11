@@ -653,10 +653,11 @@ anywhere to move the light.
 The library is still the two files at the root. `demo/img/` holds
 photographs for the documentation page only, chosen for luminance spread
 because that is what stresses the modelling: a bright portrait at mean 118,
-a mid-tone still life at 104, and the Hubble deep field at 20.
+a mid-tone still life at 104, and the Hubble deep field at 20. One more,
+a patterned window, sits behind the glass example so there is something
+to see through.
 
-They were taken from `scikit-image`'s bundled sample data, which is where
-they came from originally:
+All but the window came from `scikit-image`'s bundled sample data:
 
 | File | Source |
 | --- | --- |
@@ -664,9 +665,11 @@ they came from originally:
 | `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
 | `coffee.jpg`, `cat.jpg` | scikit-image sample data |
 | `avatar.jpg` | Rocket launch, scikit-image sample data |
+| `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
 
 **Check the licences yourself before publishing this page anywhere
-public.** NASA imagery is public domain and safe; the scikit-image samples
-are distributed for use with that project and I have not verified their
-terms for other uses. Swapping in your own photos is a one-line change per
+public.** NASA imagery is public domain and safe, and the Unsplash
+License allows free use without attribution, though the credit above is
+good manners. The scikit-image samples are distributed for use with that
+project and I have not verified their terms for other uses. Swapping in your own photos is a one-line change per
 card.
