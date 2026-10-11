@@ -773,6 +773,11 @@ All but the window came from `scikit-image`'s bundled sample data:
 | `avatar.jpg` | Rocket launch, scikit-image sample data |
 | `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
 
+The lightbulb in the hero is the [Font Awesome Free](https://fontawesome.com)
+`lightbulb` icon (solid, 6.5.2) by Fonticons, Inc., used under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). It is inlined
+unchanged in `index.html`.
+
 **Check the licences yourself before publishing this page anywhere
 public.** NASA imagery is public domain and safe, and the Unsplash
 License allows free use without attribution, though the credit above is
