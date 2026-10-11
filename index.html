@@ -1259,10 +1259,13 @@ shadows.destroy();               // remove listeners and properties</code></pre>
     return prefersDark.matches ? 'dark' : 'light';
   }
 
+  // The label shows the theme in use, not the one a click would pick.
   function labelToggle() {
-    const next = currentTheme() === 'dark' ? 'light' : 'dark';
-    toggle.textContent = next === 'dark' ? 'Dark' : 'Light';
-    toggle.setAttribute('aria-label', `Switch to ${next} theme`);
+    const now = currentTheme();
+    const next = now === 'dark' ? 'light' : 'dark';
+    toggle.textContent = now === 'dark' ? 'Dark' : 'Light';
+    toggle.setAttribute('aria-label', `Theme: ${now}. Switch to ${next}`);
+    toggle.title = `Switch to ${next} theme`;
   }
 
   try {
