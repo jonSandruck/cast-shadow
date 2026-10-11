@@ -294,11 +294,11 @@
 <div class="bar">
   <strong data-cast>cast-shadow</strong>
   <nav>
-    <a href="#install">Install</a>
     <a href="#elevation">Elevation</a>
     <a href="#light">Light</a>
     <a href="#modes">Modes</a>
-    <a href="#content">Real content</a>
+    <a href="#install">Install</a>
+    <a href="#how">How it works</a>
     <a href="#reference">Reference</a>
   </nav>
   <button class="theme-toggle" type="button" id="theme-toggle">Dark</button>
@@ -314,55 +314,14 @@
   <p class="lede"><strong>Click anywhere to move the light.</strong> Every
     example below is live and reacts to it.</p>
 
-  <!-- ================= INSTALL ================= -->
-  <section class="section" id="install">
-    <p class="kicker">Getting started</p>
-    <h2>Install</h2>
-    <p>Two files, no dependencies, no build step.</p>
-
-    <div class="demo split">
-      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
-&lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;</code></pre>
-      <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
-  …
-&lt;/article&gt;</code></pre>
-    </div>
-
-    <p style="margin-top:20px">That is the whole setup. The script starts
-      itself, picks up elements added later, and needs no configuration.</p>
-
-    <div class="note">
-      <strong>ES modules do not load over <code>file://</code>.</strong>
-      Opening the page by double-clicking it fails with a CORS error. Serve
-      the folder instead — <code>python3 -m http.server</code> is enough.
-    </div>
-  </section>
-
-  <!-- ================= MODEL ================= -->
+  <!-- ================= ELEVATION ================= -->
   <section class="section" id="elevation">
-    <p class="kicker">The model</p>
+    <p class="kicker">What it does</p>
     <h2>Elevation</h2>
     <p>
-      For a light at height <code>H</code> and an object at height
-      <code>h</code>, sitting a horizontal distance <code>d</code> from the
-      light, shadow offset is similar triangles and nothing more:
+      Give anything a height above the page. Higher objects throw longer,
+      softer shadows, and both come from that one number.
     </p>
-
-    <pre style="margin-top:14px"><code>offset = d × h / (H − h)</code></pre>
-
-    <p style="margin-top:16px">
-      Two things fall out for free. An object at <code>h = 0</code> gets no
-      offset at all — flat on the page means no throw. And an object
-      directly beneath the light gets no offset at any height.
-    </p>
-    <p>
-      That same <code>h / (H − h)</code> factor is the penumbra ratio, so
-      blur comes from one multiply rather than a tuned curve. Two objects at
-      the same height share a blur wherever they sit on screen, which is
-      what makes a layout read as one lit scene rather than a pile of
-      separate shadows.
-    </p>
-
     <div class="demo split">
       <div class="stage">
         <div class="tile" data-cast style="--cast-elevation: 4">4</div>
@@ -374,27 +333,29 @@
 .dialog { <b>--cast-elevation</b>: 80; }</code></pre>
     </div>
 
-    <p style="margin-top:20px">Height above the page, in px. Rough guide:</p>
-    <div class="scroller"><table>
-      <thead><tr><th>Range</th><th>Suits</th></tr></thead>
-      <tbody>
-        <tr><td><code>2</code>–<code>8</code></td><td>Pressed states, inset panels, hairline lift</td></tr>
-        <tr><td><code>12</code>–<code>24</code></td><td>Cards, buttons, tiles</td></tr>
-        <tr><td><code>40</code>–<code>64</code></td><td>Dropdowns, popovers, tooltips</td></tr>
-        <tr><td><code>80</code>–<code>120</code></td><td>Modals, sheets, anything that owns the screen</td></tr>
-      </tbody>
-    </table></div>
+    <h3>Smaller objects</h3>
+    <p>
+      Avatars, buttons and inline chips want low elevations. A button that
+      floats 40px off the page reads as a mistake.
+    </p>
 
-    <div class="note">
-      There is no <code>--cast-length</code>. Shadow throw is derived, not
-      set. If a shadow is the wrong length, change the object's height or
-      the light's.
+    <div class="stage" style="gap:22px">
+      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
+        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
+        <div>
+          <h4>Ada Bell</h4>
+          <p>Lighting, stage &amp; screen</p>
+        </div>
+      </div>
+      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
+      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
+      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
     </div>
   </section>
 
   <!-- ================= LIGHT ================= -->
   <section class="section" id="light">
-    <p class="kicker">The light</p>
+    <p class="kicker">What it does</p>
     <h2>Position, height, size, colour</h2>
 
     <pre style="margin-top:18px"><code>:root {
@@ -461,25 +422,11 @@
   <b>--cast-light-color</b>: #ffb870;
 }</code></pre>
     </div>
-
-    <div class="note">
-      <strong>Neutral is 6500K here, not 4000K.</strong> sRGB's white point
-      <em>is</em> D65, so 6500K is white by definition and every warmer
-      temperature reads yellow on screen. 4000K is "neutral white" in a room
-      and a visible tungsten wash on a display.
-    </div>
-
-    <div class="note">
-      <strong>Shadows stay neutral, deliberately.</strong> A shadow is only
-      tinted when some <em>other</em> source fills it — sun plus sky, or a
-      lamp plus a window — and that is a second light, not a property of
-      this one. One bulb in a room bounces off the walls at roughly its own
-      temperature, so its shadows come out darker, not bluer.
-    </div>
   </section>
+
   <!-- ================= MODES ================= -->
   <section class="section" id="modes">
-    <p class="kicker">Modes</p>
+    <p class="kicker">What it does</p>
     <h2>Five ways to be lit</h2>
     <p>
       All opt-in through the same attribute, and they compose where it makes
@@ -521,14 +468,6 @@
       </div>
       <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;</code></pre>
     </div>
-    <div class="note">
-      <code>filter</code> creates a stacking context <strong>and</strong> a
-      containing block, so any <code>position: fixed</code> descendant will
-      anchor to this element instead of the viewport. It also costs more to
-      paint and has no spread. Don't use it on opaque images — a
-      <code>.png</code> photo has no transparency, so the box is already
-      correct and cheaper.
-    </div>
 
     <h3 id="mode-surface">Surface — light the object's own face</h3>
     <p>
@@ -555,6 +494,206 @@
   <b>--cast-shade</b>: 0.09;  /* unlit edge */
 }</code></pre>
     </div>
+
+    <h3>The layer, side by side</h3>
+    <p>
+      Same photo, same settings, one property different. On the left the
+      modelling sits at its default layer and the image covers it entirely.
+      On the right it is lifted over the photo.
+    </p>
+
+    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));max-width:640px">
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: -1</code> — hidden</figcaption>
+      </figure>
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: 2</code> — lifted</figcaption>
+      </figure>
+    </div>
+
+    <h3 id="mode-glass">Glass — for surfaces you can see through</h3>
+    <p>
+      Not a mode on its own: a word you add next to <code>surface</code>
+      when the element's background is translucent. Without it, the grain
+      gets louder and lighter the clearer the background gets.
+    </p>
+    <div class="demo split">
+      <div class="stage photo">
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge</code></figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge glass" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge glass</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface edge glass"</b>&gt;…&lt;/div&gt;
+
+/* or write it yourself */
+.panel {
+  isolation: auto;
+  <b>--cast-surface-z</b>: 2;
+  <b>--cast-grain-z</b>: 9999;
+  <b>--cast-edge-lit</b>: color-mix(in srgb,
+    var(--cast-light-color) 50%, transparent);
+  <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
+  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
+  <b>--cast-grain-blend</b>: soft-light;
+}</code></pre>
+    </div>
+
+    <h3 id="mode-edge">Edge — a directional rim</h3>
+    <p>
+      A hairline lit on the side facing the light and shaded on the side
+      away from it. Two inset shadows reusing the vector already on the
+      element. It is the cheapest thing here and does the most for the
+      illusion.
+    </p>
+    <div class="demo split">
+      <div class="stage">
+        <figure>
+          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
+          <figcaption>shadow only</figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare" data-cast="edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>edge</code></figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare" data-cast="surface edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface edge"</b>&gt;…&lt;/div&gt;
+
+.panel {
+  <b>--cast-edge-width</b>: 1;
+}</code></pre>
+    </div>
+
+    <h3 id="mode-room">Room — light the space</h3>
+    <p>
+      A pool centred on the lamp falling off to a vignette at the edges.
+      Works on the page or on any element. <strong>This page is in room
+      mode</strong> — the background follows the light.
+    </p>
+    <div class="demo split">
+      <pre><code>&lt;body <b>data-cast="room"</b>&gt;
+
+&lt;section <b>data-cast="room"</b>&gt;…&lt;/section&gt;</code></pre>
+      <pre><code>.hero {
+  <b>--cast-room-reach</b>: 900;  /* pool radius, px */
+  <b>--cast-grain</b>: 0.2;       /* dither strength */
+  <b>--cast-grain-size</b>: 280;  /* dither scale, px */
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ================= INSTALL ================= -->
+  <section class="section" id="install">
+    <p class="kicker">Getting started</p>
+    <h2>Install</h2>
+    <p>Two files, no dependencies, no build step.</p>
+
+    <div class="demo split">
+      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
+&lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
+  …
+&lt;/article&gt;</code></pre>
+    </div>
+
+    <p style="margin-top:20px">That is the whole setup. The script starts
+      itself, picks up elements added later, and needs no configuration.</p>
+
+    <div class="note">
+      <strong>ES modules do not load over <code>file://</code>.</strong>
+      Opening the page by double-clicking it fails with a CORS error. Serve
+      the folder instead — <code>python3 -m http.server</code> is enough.
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section class="section" id="how">
+    <p class="kicker">Under the hood</p>
+    <h2>How it works</h2>
+    <p>
+      Everything shown above, explained: the model, the reasoning behind
+      each mode, and the measurements behind the defaults.
+    </p>
+
+    <h3 id="how-model">The model</h3>
+    <p>
+      For a light at height <code>H</code> and an object at height
+      <code>h</code>, sitting a horizontal distance <code>d</code> from the
+      light, shadow offset is similar triangles and nothing more:
+    </p>
+
+    <pre style="margin-top:14px"><code>offset = d × h / (H − h)</code></pre>
+
+    <p style="margin-top:16px">
+      Two things fall out for free. An object at <code>h = 0</code> gets no
+      offset at all — flat on the page means no throw. And an object
+      directly beneath the light gets no offset at any height.
+    </p>
+    <p>
+      That same <code>h / (H − h)</code> factor is the penumbra ratio, so
+      blur comes from one multiply rather than a tuned curve. Two objects at
+      the same height share a blur wherever they sit on screen, which is
+      what makes a layout read as one lit scene rather than a pile of
+      separate shadows.
+    </p>
+
+    <p style="margin-top:20px">Height above the page, in px. Rough guide:</p>
+    <div class="scroller"><table>
+      <thead><tr><th>Range</th><th>Suits</th></tr></thead>
+      <tbody>
+        <tr><td><code>2</code>–<code>8</code></td><td>Pressed states, inset panels, hairline lift</td></tr>
+        <tr><td><code>12</code>–<code>24</code></td><td>Cards, buttons, tiles</td></tr>
+        <tr><td><code>40</code>–<code>64</code></td><td>Dropdowns, popovers, tooltips</td></tr>
+        <tr><td><code>80</code>–<code>120</code></td><td>Modals, sheets, anything that owns the screen</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note">
+      There is no <code>--cast-length</code>. Shadow throw is derived, not
+      set. If a shadow is the wrong length, change the object's height or
+      the light's.
+    </div>
+
+    <h3 id="how-light">The light</h3>
+    <div class="note">
+      <strong>Neutral is 6500K here, not 4000K.</strong> sRGB's white point
+      <em>is</em> D65, so 6500K is white by definition and every warmer
+      temperature reads yellow on screen. 4000K is "neutral white" in a room
+      and a visible tungsten wash on a display.
+    </div>
+    <div class="note">
+      <strong>Shadows stay neutral, deliberately.</strong> A shadow is only
+      tinted when some <em>other</em> source fills it — sun plus sky, or a
+      lamp plus a window — and that is a second light, not a property of
+      this one. One bulb in a room bounces off the walls at roughly its own
+      temperature, so its shadows come out darker, not bluer.
+    </div>
+
+    <h3 id="how-shape">Shape</h3>
+    <div class="note">
+      <code>filter</code> creates a stacking context <strong>and</strong> a
+      containing block, so any <code>position: fixed</code> descendant will
+      anchor to this element instead of the viewport. It also costs more to
+      paint and has no spread. Don't use it on opaque images — a
+      <code>.png</code> photo has no transparency, so the box is already
+      correct and cheaper.
+    </div>
+
+    <h3 id="how-surface">Surface</h3>
     <div class="note">
       <strong>The light's height and size reach the face.</strong> Sheen
       strength follows how oblique the light is —
@@ -595,40 +734,10 @@
       card face is <code>0</code>. Lift it with
       <code>--cast-surface-z: 2</code>, at the cost of tinting whatever it
       crosses. With <code>edge</code> on as well, the same number lifts the
-      rim; see <a href="#content">Real content</a>.
+      rim; see <a href="#photos">Media cards</a>.
     </div>
 
-    <h3 id="mode-glass">Glass — for surfaces you can see through</h3>
-    <p>
-      Not a mode on its own: a word you add next to <code>surface</code>
-      when the element's background is translucent. Without it, the grain
-      gets louder and lighter the clearer the background gets.
-    </p>
-    <div class="demo split">
-      <div class="stage photo">
-        <figure>
-          <div class="tile bare clear" data-cast="surface edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge</code></figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare clear" data-cast="surface edge glass" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge glass</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;div <b>data-cast="surface edge glass"</b>&gt;…&lt;/div&gt;
-
-/* or write it yourself */
-.panel {
-  isolation: auto;
-  <b>--cast-surface-z</b>: 2;
-  <b>--cast-grain-z</b>: 9999;
-  <b>--cast-edge-lit</b>: color-mix(in srgb,
-    var(--cast-light-color) 50%, transparent);
-  <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
-  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
-  <b>--cast-grain-blend</b>: soft-light;
-}</code></pre>
-    </div>
+    <h3 id="how-glass">Glass</h3>
     <div class="note">
       <strong>Why it happens.</strong> Surface mode isolates the element so
       its layers can sit under the content. But <code>mix-blend-mode</code>
@@ -649,8 +758,8 @@
       half of overlay's.
     </div>
     <div class="note">
-      <strong>Don't tune glass by theme.</strong> These tiles are fully
-      clear and skip the page's dark-mode sheen and blend overrides,
+      <strong>Don't tune glass by theme.</strong> The tiles in the
+      <a href="#mode-glass">glass example</a> are fully clear and skip the page's dark-mode sheen and blend overrides,
       because what's behind them doesn't change with the theme. Tinted with
       the theme's surface colour, they measured <code>+18.1</code> L* in
       light mode and <code>&minus;6.4</code> in dark. Clear, they measure
@@ -680,34 +789,7 @@
       through itself the way real glass would.
     </div>
 
-    <h3 id="mode-edge">Edge — a directional rim</h3>
-    <p>
-      A hairline lit on the side facing the light and shaded on the side
-      away from it. Two inset shadows reusing the vector already on the
-      element. It is the cheapest thing here and does the most for the
-      illusion.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <figure>
-          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
-          <figcaption>shadow only</figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare" data-cast="edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>edge</code></figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare" data-cast="surface edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;div <b>data-cast="surface edge"</b>&gt;…&lt;/div&gt;
-
-.panel {
-  <b>--cast-edge-width</b>: 1;
-}</code></pre>
-    </div>
+    <h3 id="how-edge">Edge</h3>
     <div class="note">
       <strong>Don't pair it with a border.</strong> A border and a lit rim
       are two ways to draw the same edge, and running both draws it twice.
@@ -752,22 +834,7 @@
       and <code>--cast-shade</code> to <code>0</code>.
     </div>
 
-    <h3 id="mode-room">Room — light the space</h3>
-    <p>
-      A pool centred on the lamp falling off to a vignette at the edges.
-      Works on the page or on any element. <strong>This page is in room
-      mode</strong> — the background follows the light.
-    </p>
-    <div class="demo split">
-      <pre><code>&lt;body <b>data-cast="room"</b>&gt;
-
-&lt;section <b>data-cast="room"</b>&gt;…&lt;/section&gt;</code></pre>
-      <pre><code>.hero {
-  <b>--cast-room-reach</b>: 900;  /* pool radius, px */
-  <b>--cast-grain</b>: 0.2;       /* dither strength */
-  <b>--cast-grain-size</b>: 280;  /* dither scale, px */
-}</code></pre>
-    </div>
+    <h3 id="how-room">Room</h3>
     <div class="note">
       Room mode needs <strong>no JavaScript at all</strong>. The pool's
       position comes from numbers already on the element, and nothing here
@@ -776,19 +843,8 @@
       cannot share an element with <code>surface</code>. Put room on the
       container and surface on its contents.
     </div>
-  </section>
-  <!-- ================= REAL CONTENT ================= -->
-  <section class="section" id="content">
-    <p class="kicker">In practice</p>
-    <h2>Real content</h2>
-    <p>
-      Tiles are a fair test of geometry and a poor test of everything else.
-      Below is the kind of thing the library actually has to survive: cards
-      with images running to the edge, headings, body copy at small sizes,
-      avatars, buttons.
-    </p>
 
-    <h3>Media cards</h3>
+    <h3 id="photos">Media cards</h3>
     <p>
       Images run full bleed, so both the sheen and the rim would be hidden
       behind them. These lift both with <code>--cast-surface-z: 2</code>,
@@ -837,28 +893,6 @@
 &lt;/article&gt;</code></pre>
     </div>
 
-    <h3>The layer, side by side</h3>
-    <p>
-      Same photo, same settings, one property different. On the left the
-      modelling sits at its default layer and the image covers it entirely.
-      On the right it is lifted over the photo.
-    </p>
-
-    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));max-width:640px">
-      <figure>
-        <article class="article" data-cast="surface edge" style="--cast-elevation: 22">
-          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
-        </article>
-        <figcaption><code>--cast-surface-z: -1</code> — hidden</figcaption>
-      </figure>
-      <figure>
-        <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
-          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
-        </article>
-        <figcaption><code>--cast-surface-z: 2</code> — lifted</figcaption>
-      </figure>
-    </div>
-
     <div class="note">
       <strong>Lifting the modelling costs contrast.</strong> On this page's
       muted body text, a sheen crossing the type takes it from
@@ -896,25 +930,6 @@
           <p>Under <code>prefers-reduced-motion</code> the script stops writing and the stylesheet falls back to a static shadow. The same applies if the script never runs at all.</p>
         </div>
       </article>
-    </div>
-
-    <h3>Smaller objects</h3>
-    <p>
-      Avatars, buttons and inline chips want low elevations. A button that
-      floats 40px off the page reads as a mistake.
-    </p>
-
-    <div class="stage" style="gap:22px">
-      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
-        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
-        <div>
-          <h4>Ada Bell</h4>
-          <p>Lighting, stage &amp; screen</p>
-        </div>
-      </div>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
-      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
     </div>
   </section>
 
@@ -1044,6 +1059,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       back to the static shadow.
     </p>
   </section>
+
 </main>
 <section class="tuner" id="tuner" aria-label="Lighting controls">
   <div class="tuner-head">
