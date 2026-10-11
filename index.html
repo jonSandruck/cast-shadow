@@ -166,6 +166,52 @@
   figure { margin: 0; }
   figcaption { font-size: 13px; color: var(--muted); margin-top: 16px; text-align: center; }
 
+  /* ---- Showcase: everything at once ------------------------------------ */
+  .scene { display: grid; gap: 26px; margin: 44px 0 0; }
+  .scene-hero {
+    display: flex; flex-direction: column; gap: 22px; min-height: 380px;
+    padding: 18px; border-radius: 20px;
+    background: center / cover url(demo/img/window.jpg);
+  }
+  /*
+   * Frosted glass. glass makes the lighting behave on a see-through surface
+   * but deliberately doesn't blur; the blur is ours. Tint and text colour
+   * are picked for the photograph behind, not the theme: the photo doesn't
+   * change with the theme, so the panels shouldn't either.
+   */
+  .scene-glass {
+    color: #f4f2ec;
+    background: rgb(14 18 26 / 0.6);
+    backdrop-filter: blur(10px) saturate(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  }
+  .scene-nav {
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 20px 10px 14px; border-radius: 999px; --cast-elevation: 10;
+  }
+  .scene-brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -0.01em; }
+  .scene-logo { width: 28px; height: 28px; --cast-elevation: 8; }
+  .scene-logo .face { fill: var(--lamp); stroke: none; }
+  .scene-links { display: flex; gap: 18px; margin-left: auto; font-size: 14px; }
+  .scene-panel {
+    margin-top: auto; max-width: 540px; padding: 26px 26px 24px;
+    border-radius: 18px; --cast-elevation: 30;
+  }
+  .scene-title {
+    margin: 0 0 8px; font-size: clamp(24px, 3.2vw, 32px); font-weight: 700;
+    line-height: 1.1; letter-spacing: -0.025em; text-wrap: balance;
+  }
+  .scene-panel .scene-lede { margin: 0 0 20px; font-size: 15px; }
+  .scene-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .scene-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 24px; }
+  .scene-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 24px; }
+  /* The photo card sets the row's height; the studio card stretches to meet it. */
+  .scene-stack { display: flex; flex-direction: column; gap: 24px; }
+  .scene-stack .article { flex: 1; }
+  .scene-stack .body { display: flex; flex-direction: column; height: 100%; }
+  .scene-stack .scene-actions { margin-top: auto; padding-top: 18px; }
+  @media (max-width: 560px) { .scene-links { display: none; } .scene-hero { min-height: 340px; } }
+
   /* ---- Article cards: the real-content test -------------------------- */
   .cards {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
@@ -313,6 +359,88 @@
   </p>
   <p class="lede"><strong>Click anywhere to move the light.</strong> Every
     example below is live and reacts to it.</p>
+
+  <!-- ================= SHOWCASE ================= -->
+  <section class="scene" id="showcase" aria-label="An example page, lit by the library">
+    <div class="scene-hero">
+      <div class="scene-nav scene-glass" data-cast="surface edge glass">
+        <span class="scene-brand">
+          <svg class="mark scene-logo" data-cast="shape" viewBox="0 0 100 100" aria-hidden="true">
+            <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
+          </svg>
+          Northfold
+        </span>
+        <span class="scene-links"><span>Lamps</span><span>Studio</span><span>Journal</span></span>
+      </div>
+
+      <div class="scene-panel scene-glass" data-cast="surface edge glass">
+        <p class="scene-title">Lamps, made to order.</p>
+        <p class="scene-lede">Hand-turned brass and linen, built in our studio when you order
+          and shipped within the week.</p>
+        <div class="scene-actions">
+          <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Shop the range</button>
+          <button class="btn" data-cast="edge" style="--cast-elevation: 16">Visit the studio</button>
+          <button class="btn" data-cast="edge" style="--cast-elevation: 6">Gift cards</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene-row">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
+        <div class="body">
+          <p class="meta">Built to order</p>
+          <h4>Nothing in a warehouse</h4>
+          <p>Every lamp is made after you order it, from parts we turn ourselves.</p>
+        </div>
+      </article>
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
+        <div class="body">
+          <p class="meta">Warm to cool</p>
+          <h4>Candle to daylight</h4>
+          <p>Each one dims from 1800K, a candle, up to 4000K for working late.</p>
+        </div>
+      </article>
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
+        <div class="body">
+          <p class="meta">Ten years</p>
+          <h4>Parts for life</h4>
+          <p>If something wears out, we post you the part and the tool to fit it.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="scene-pair">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+        <img src="demo/img/coffee.jpg" alt="A cup of coffee on a saucer, seen from above" width="480" height="320">
+        <div class="body">
+          <p class="meta">From the journal</p>
+          <h4>Reading light for slow mornings</h4>
+          <p>Where to put a lamp so the page is lit and the screen isn't.</p>
+        </div>
+      </article>
+      <div class="scene-stack">
+        <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
+          <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
+          <div>
+            <h4>"The only lamp I've never moved."</h4>
+            <p>Ada Bell, who owns three</p>
+          </div>
+        </div>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
+          <div class="body">
+            <p class="meta">The studio</p>
+            <h4>Come and switch one on</h4>
+            <p>Every lamp we make is lit on the bench, so you can try the
+              brightness and the colour before you choose. Open Thursday to
+              Saturday.</p>
+            <div class="scene-actions">
+              <button class="btn" data-cast="edge" style="--cast-elevation: 12">Book a visit</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 
   <!-- ================= ELEVATION ================= -->
   <section class="section" id="elevation">
