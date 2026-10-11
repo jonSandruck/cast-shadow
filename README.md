@@ -191,6 +191,7 @@ from it.
 | `--cast-edge-width` | `1` | Rim width, in px |
 | `--cast-edge-lit` | 30% of the light's colour | Colour of the lit rim |
 | `--cast-edge-shade` | `rgb(0 0 0 / 0.34)` | Colour of the shaded rim |
+| `--cast-edge-overhead` | 29% of the shade colour | Rim colour with the light straight above |
 
 Two inset shadows reusing the same vector, composed into the same
 `box-shadow` as the drop shadow — `box-shadow` isn't additive, so all the
@@ -236,10 +237,14 @@ side. Measured on a mid-grey tile at `d = 250`, the directional rim runs
 different curve from distance fade and does not bring the flicker with
 it: obliqueness moves smoothly with position, so the hairline never steps.
 
-**The light doesn't.** As the direction fades, an even lit ring takes
-over, because an edge lit from straight above is lit on every side. So
-the bright side holds steady at every distance while the dark side turns
-to light. See *overhead* under surface mode for the numbers.
+**The light doesn't vanish either.** As the direction fades, an even ring
+takes over, in `--cast-edge-overhead`. On a solid object the rim is a
+bevel, the rounded edge between top and side. Lit from straight above,
+the top faces the light squarely and the bevel tilts away, so the bevel
+is evenly lit but *dimmer* than the face: at a 45 degree bevel it gets
+cos 45 = 0.71 of the face's light, so the default is 29% of the dark rim
+colour. On glass it's the lit colour instead — see `glass` below. Numbers
+are under *overhead* in surface mode.
 
 It is applied by mixing whatever colour you set toward transparent rather
 than by owning the alpha, so `--cast-edge-lit` and `--cast-edge-shade`
@@ -451,33 +456,39 @@ brightest. Directly under a lamp, neither side of a face is brighter than
 the other, but the face is still lit.
 
 So as the light comes overhead, the directional effects hand over to even
-ones: a uniform wash on the face, and a uniform lit ring on the rim. The
-amount of light stays about the same; only its direction goes. Measured
-on a clear glass tile over mid-grey:
+ones: a uniform wash on the face, and an even ring on the rim. The amount
+of light stays about the same; only its direction goes.
 
-| light distance | face L\* | lit rim | dark rim |
-| --- | --- | --- | --- |
-| 900 | 49.0 | +24.7 | −21.2 |
-| 300 | 51.6 | +20.5 | −0.9 |
-| 0, before | 48.7 | 0.0 | 0.0 |
-| 0, now | 56.2 | +22.6 | +22.6 |
+The ring is where solid and glass differ. A solid tile's edge is a bevel
+tilting away from an overhead light, so it ends up slightly *darker* than
+the face. A glass tile's edge glows, because light through the pane
+catches the inside of it. Rim delta against the face, over mid-grey:
+
+| light distance | solid: face L\* | solid: rim | glass: face L\* | glass: rim |
+| --- | --- | --- | --- | --- |
+| 900 | 67.5 | +9.2 / −21.1 | 49.0 | +24.7 / −21.2 |
+| 300 | 69.0 | +1.9 / −14.0 | 51.6 | +20.5 / −0.9 |
+| 0, before any of this | 67.6 | 0.0 / 0.0 | 48.7 | 0.0 / 0.0 |
+| 0, now | 72.1 | −6.7 / −6.7 | 56.2 | +22.6 / +22.6 |
+
+An earlier version of this change drew the lit ring on everything, which
+put a solid tile's edge *brighter* than its face under the lamp. That's
+right for glass and wrong for anything you can't see through.
 
 What this changes on a real page:
 
-- **Light mode, pale surfaces:** nothing. A white wash and a white ring on
-  a near-white card have no headroom; 0.0% of pixels moved.
-- **Dark mode:** a card under the lamp gains a lit ring and lifts about
-  +7 L\*. Things with their own background on that card, like code chips,
-  don't lift, so they stand out a little more there.
+- **Light mode, pale surfaces:** the face doesn't change — a white wash on
+  near-white has no headroom — but the edge comes back. Under the lamp a
+  pale card's rim used to measure +0.4, gone; now it's −8.7 all round.
+- **Dark mode:** a card under the lamp lifts about +7 L\*, and its edge
+  sits just darker than the face. Things with their own background on that
+  card, like code chips, don't lift, so they stand out a little more there.
 - **Far from the light:** nothing. With the light off to one side, every
   viewport of the demo was pixel-identical.
 - **Reduced motion and no JavaScript:** the static fallback puts the light
   at a middling distance, inside 45 degrees, so it picks up a little of
   both. On a dark card, +1.1 L\* on the face.
 
-Still true and unchanged: near the light, a pale card in light mode loses
-its dark rim, because nothing on it is turned away from the light. It was
-like that before this change too.
 
 **Source size** sets `--cast-sheen-reach`, the width of the terminator. A
 small hard source draws a tight, high-contrast falloff; a big soft one
@@ -577,7 +588,7 @@ is whatever sits back there, which the library can't know, so `glass`
 takes the blend whose worst case is better: `soft-light`, at half of
 `overlay`'s.
 
-`glass` is six settings, and you can write them yourself instead:
+`glass` is seven settings, and you can write them yourself instead:
 
 ```css
 .panel {
@@ -588,6 +599,9 @@ takes the blend whose worst case is better: `soft-light`, at half of
   /* a stronger rim, to match an opaque card's */
   --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
   --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  /* under the lamp, light through the pane lights the inside of the edge */
+  --cast-edge-overhead: var(--cast-edge-lit);
 
   --cast-grain-blend: soft-light;  /* steady over any backdrop */
 }
@@ -622,7 +636,7 @@ theme.
 
 **Your own CSS wins.** `glass` is written with the specificity of one
 class, so a class of yours loaded after the library overrides any of the
-six. An earlier version used two attribute selectors and beat
+seven. An earlier version used two attribute selectors and beat
 `.panel { --cast-surface-z: 1 }`; that's fixed.
 
 **Costs.** Both layers now sit over the content, so they tint text, the

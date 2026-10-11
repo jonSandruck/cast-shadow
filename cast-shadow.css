@@ -204,8 +204,10 @@
    * glass tile, the lit rim ran +24.7 far from the light and 0.0 under it.
    *
    * So the directional effects hand over to even ones as this rises:
-   * the face gets a uniform wash, and the rim a uniform lit ring. The
-   * total amount of light stays roughly steady; only its direction goes.
+   * the face gets a uniform wash, and the rim an even ring -- dimmer than
+   * the face on a solid object, lit on glass; see --cast-edge-overhead.
+   * The total amount of light stays roughly steady; only its direction
+   * goes.
    */
   --cast-overhead: calc(1 - var(--cast-oblique));
 
@@ -298,13 +300,24 @@
     in srgb, var(--cast-edge-shade) calc(var(--cast-oblique) * 100%), transparent
   );
 
-  /* An edge lit from straight above is lit on every side: a uniform ring
-     with no dark side. It takes over from the directional pair as the
-     light comes overhead, so the lit side holds steady at every distance
-     -- measured on a clear glass tile, +20.5 to +24.7 -- while the dark
-     side fades and is replaced by light. */
+  /*
+   * The rim's colour when the light is straight above, which takes over
+   * from the directional pair as the light comes overhead.
+   *
+   * On a solid object the rim is a bevel: the rounded edge between top
+   * and side. Lit from straight above, the top faces the light squarely
+   * and the bevel tilts away from it, so the bevel is evenly lit but
+   * DIMMER than the face. At a 45 degree bevel it gets cos 45 = 0.71 of
+   * the face's light, so it reads about 29% of the way to the full dark
+   * rim. An earlier version drew a bright ring here, which made the edge
+   * brighter than the face under the lamp -- wrong for anything solid.
+   *
+   * Glass swaps in the lit colour: light passes through the pane and
+   * catches the inside of the edge, so there the bright ring is right.
+   */
+  --cast-edge-overhead: color-mix(in srgb, var(--cast-edge-shade) 29%, transparent);
   --cast-rim-ring: color-mix(
-    in srgb, var(--cast-edge-lit) calc(var(--cast-overhead) * 100%), transparent
+    in srgb, var(--cast-edge-overhead) calc(var(--cast-overhead) * 100%), transparent
   );
 
   /*
@@ -634,6 +647,10 @@
 
   --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
   --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  /* Under the lamp, a solid edge dims; a glass one glows, because light
+     through the pane catches the inside of the edge. */
+  --cast-edge-overhead: var(--cast-edge-lit);
 
   /*
    * Elsewhere the blend is picked per surface, because overlay and

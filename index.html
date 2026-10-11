@@ -573,10 +573,12 @@
       At <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
       gradient angle means nothing; the sheen used to run at full strength
       there, aimed nowhere. Now the gradient fades as the light comes
-      overhead, and an even wash takes its place — on the rim, an even lit
-      ring. Click right on a card to see it. On a clear glass tile, the lit
-      rim used to fall from <code>+24.7</code> to <code>0.0</code> as the
-      light arrived; now it holds at <code>+22.6</code>.
+      overhead, and an even wash takes its place. Click right on a card to
+      see it. The rim turns even too: on a solid card it's a bevel tilting
+      away from the lamp, so it sits just <em>darker</em> than the face
+      (<code>&minus;6.7</code>); on glass, light through the pane lights
+      the edge from inside, so it glows (<code>+22.6</code>, where it used
+      to fall to <code>0.0</code>).
     </div>
     <div class="note">
       <strong>Tune by surface, not by theme.</strong> Compositing leaves
@@ -623,6 +625,7 @@
   <b>--cast-edge-lit</b>: color-mix(in srgb,
     var(--cast-light-color) 50%, transparent);
   <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
+  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
   <b>--cast-grain-blend</b>: soft-light;
 }</code></pre>
     </div>
@@ -722,8 +725,10 @@
       so the directional pair scales by obliqueness — at
       <code>d&nbsp;=&nbsp;250</code> it runs <code>45.3</code> levels with
       the light at <code>H&nbsp;=&nbsp;200</code> and <code>7.6</code> at
-      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even lit ring takes
-      over, because that edge is lit on every side. Distance fade stays
+      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even ring takes over
+      in <code>--cast-edge-overhead</code>: just darker than the face on a
+      solid tile, whose bevel tilts away from an overhead lamp, and lit on
+      glass. Distance fade stays
       off: a broad soft area crossing a fade threshold reads as light, a
       hairline reads as flicker.
     </div>
@@ -960,6 +965,7 @@
         <tr><td><code>--cast-edge-width</code></td><td><code>1</code></td><td>Rim width, in px</td></tr>
         <tr><td><code>--cast-edge-lit</code></td><td>30% of the light's colour</td><td>Colour of the lit rim</td></tr>
         <tr><td><code>--cast-edge-shade</code></td><td><code>rgb(0 0 0 / 0.34)</code></td><td>Colour of the shaded rim</td></tr>
+        <tr><td><code>--cast-edge-overhead</code></td><td>29% of the shade colour</td><td>Rim colour with the light straight above</td></tr>
       </tbody>
     </table></div>
 
