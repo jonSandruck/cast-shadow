@@ -137,14 +137,15 @@
   .note strong { color: var(--ink); }
   /* Each feature keeps its reasoning and measurements one click away. */
   .how {
-    margin: 22px 0 0; max-width: 68ch; padding: 0 16px;
+    margin: 22px 0 0; padding: 0 16px;
     border: 1px solid var(--line); border-radius: 10px;
   }
   /* The whole top row is the click target, not just the words. */
   .how summary {
     cursor: pointer; padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--muted);
   }
-  .how[open] summary { border-bottom: 1px solid var(--line); }
+  /* The panel already frames its notes, so they drop the side rule. */
+  .how .note { border-left: 0; padding-left: 0; }
   .how summary:hover { color: var(--ink); }
   .how summary:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; border-radius: 3px; }
 
