@@ -546,7 +546,8 @@
  * failure the page itself hits in room mode.
  *
  * Measured on a tile over a mid-grey page, grain's own contribution as
- * the background's alpha falls from 1 to 0:
+ * the background's alpha falls from 1 to 0, both with soft-light (which
+ * glass now sets; see the blend note below):
  *
  *                     RMS            mean shift
  *   isolated        1.01 -> 3.05    +3.7 -> +13.9
@@ -594,6 +595,24 @@
 
   --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
   --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  /*
+   * Elsewhere the blend is picked per surface, because overlay and
+   * soft-light trade places with the ground's lightness. Behind glass the
+   * ground is whatever happens to be back there, which the library can't
+   * know -- so pick the blend whose worst case is least bad. Grain's own
+   * contribution on a glass tile at alpha 0:
+   *
+   *   backdrop       overlay            soft-light
+   *   dark           RMS 0.88  +3.5     RMS 1.37  +5.2
+   *   mid-tone       RMS 2.80  +11.1    RMS 1.36  +5.2
+   *   light          RMS 0.94  +3.2     RMS 0.50  +1.7
+   *
+   * overlay is a contrast boost centred on mid-grey: quiet over dark and
+   * light, loud over mid-tones, which is what most photographs are. So
+   * soft-light, whose worst case is half of overlay's.
+   */
+  --cast-grain-blend: soft-light;
 }
 
 /*

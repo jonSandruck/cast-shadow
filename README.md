@@ -510,14 +510,31 @@ plain alpha compositing. At alpha 0, `soft-light` grain measured the same
 as `normal` — the blend mode had stopped doing anything.
 
 Grain's own contribution as the background's alpha falls from 1 to 0, on
-a tile over a mid-grey page:
+a tile over a mid-grey page, with `soft-light` blending:
 
 | | grain RMS | mean shift |
 | --- | --- | --- |
 | `surface` | 1.01 → 3.05 | +3.7 → +13.9 |
 | `surface glass` | 1.00 → 1.36 | +3.7 → +5.2 |
 
-`glass` is five settings, and you can write them yourself instead:
+**`glass` also picks the blend, and that matters as much as the rest.**
+Under `overlay`, the library default, the same fix only takes the grain
+from RMS 3.07 to 2.80. `overlay` is a contrast boost centred on mid-grey,
+so it's quiet over dark and light backdrops and loud over mid-tones —
+which is what most photographs are. Grain on a glass tile at alpha 0:
+
+| backdrop | `overlay` | `soft-light` |
+| --- | --- | --- |
+| dark | RMS 0.88, +3.5 | RMS 1.37, +5.2 |
+| mid-tone | RMS 2.80, +11.1 | RMS 1.36, +5.2 |
+| light | RMS 0.94, +3.2 | RMS 0.50, +1.7 |
+
+Everywhere else the blend is picked per surface. Behind glass the surface
+is whatever sits back there, which the library can't know, so `glass`
+takes the blend whose worst case is better: `soft-light`, at half of
+`overlay`'s.
+
+`glass` is six settings, and you can write them yourself instead:
 
 ```css
 .panel {
@@ -528,6 +545,8 @@ a tile over a mid-grey page:
   /* a stronger rim, to match an opaque card's */
   --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
   --cast-edge-shade: rgb(0 0 0 / 0.45);
+
+  --cast-grain-blend: soft-light;  /* steady over any backdrop */
 }
 ```
 
@@ -549,9 +568,18 @@ definition an opaque card gets. Over the demo's window photograph:
 | glass, stronger rim | +80.2 | −54.7 |
 | opaque card | +76.5 | −57.8 |
 
+**Don't tune glass by theme.** A dark theme usually means a dark surface,
+so it's natural to switch sheen or blend with the theme. Glass is the
+exception: its surface is the backdrop, which doesn't change with the
+theme. The demo tinted its glass tiles with the theme's surface colour
+and lost the symmetry badly — over the same photo, +18.1 L* in light
+mode against −6.4 in dark. Clear tiles with no per-theme overrides land
+at +2.4 and +2.6. If you want a tint, pick one per backdrop, not per
+theme.
+
 **Your own CSS wins.** `glass` is written with the specificity of one
 class, so a class of yours loaded after the library overrides any of the
-five. An earlier version used two attribute selectors and beat
+six. An earlier version used two attribute selectors and beat
 `.panel { --cast-surface-z: 1 }`; that's fixed.
 
 **Costs.** Both layers now sit over the content, so they tint text, the

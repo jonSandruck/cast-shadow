@@ -30,6 +30,8 @@
     }
     :root:not([data-theme="light"]) [data-cast] {
       --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
+    }
+    :root:not([data-theme="light"]) [data-cast]:not([data-cast~="glass"]) {
       --cast-sheen: 0.07; --cast-grain-blend: overlay;
     }
   }
@@ -41,6 +43,12 @@
   }
   :root[data-theme="dark"] [data-cast] {
     --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
+  }
+  /* Sheen and blend are tuned to the surface, and a dark theme means a dark
+     surface. Glass is the exception: its surface is whatever sits behind
+     it, which doesn't change with the theme, so it keeps the same settings
+     in both. Shadow colour still changes -- the shadow falls on the page. */
+  :root[data-theme="dark"] [data-cast]:not([data-cast~="glass"]) {
     --cast-sheen: 0.07; --cast-grain-blend: overlay;
   }
 
@@ -144,7 +152,11 @@
   .tile.bare { border: 0; }
   /* The glass example: a photo behind, so there is something to see through. */
   .stage.photo { border: 0; background: center / cover url(demo/img/window.jpg); }
-  .tile.clear { background: color-mix(in srgb, var(--surface) 30%, transparent); }
+  /* Fully clear. A tint taken from the theme's surface colour made the tiles
+     milky in light mode and nearly invisible in dark (+16.5 L* against -10.1
+     over the same photo), and the backdrop doesn't change with the theme,
+     so neither should the glass. */
+  .tile.clear { background: transparent; }
   .chip { width: 90px; height: 90px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); }
   .chip.pill { width: 180px; border-radius: 999px; }
   .chip.block { border-radius: 6px; }
@@ -609,6 +621,7 @@
   <b>--cast-edge-lit</b>: color-mix(in srgb,
     var(--cast-light-color) 50%, transparent);
   <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
+  <b>--cast-grain-blend</b>: soft-light;
 }</code></pre>
     </div>
     <div class="note">
@@ -620,6 +633,23 @@
       alpha. Measured as the background's alpha falls from 1 to 0, grain
       RMS runs <code>1.01 → 3.05</code> without <code>glass</code> and
       <code>1.00 → 1.36</code> with it.
+    </div>
+    <div class="note">
+      <strong>It picks the blend too.</strong> Those numbers are with
+      <code>soft-light</code>. Under <code>overlay</code>, the library
+      default, the same fix only gets grain from <code>3.07</code> to
+      <code>2.80</code>: overlay is loud over mid-tones, which is what most
+      photos are. Behind glass the library can't know the backdrop, so
+      <code>glass</code> uses <code>soft-light</code>, whose worst case is
+      half of overlay's.
+    </div>
+    <div class="note">
+      <strong>Don't tune glass by theme.</strong> These tiles are fully
+      clear and skip the page's dark-mode sheen and blend overrides,
+      because what's behind them doesn't change with the theme. Tinted with
+      the theme's surface colour, they measured <code>+18.1</code> L* in
+      light mode and <code>&minus;6.4</code> in dark. Clear, they measure
+      <code>+2.4</code> and <code>+2.6</code>.
     </div>
     <div class="note">
       <strong>Why it's three lines, not one.</strong> Dropping the
