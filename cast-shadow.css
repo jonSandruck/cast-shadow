@@ -184,13 +184,30 @@
    * light, so --cast-ux and --cast-uy are both zero and the gradient angle
    * is whatever atan2(0, 0) returns. The sheen was at full strength there,
    * pointing nowhere in particular; measured spread was 23.5 levels, its
-   * maximum. Obliqueness is zero at that point, so now it fades out
-   * instead. A face directly under a light has no lit side.
+   * maximum. Obliqueness is zero at that point, so the directional part
+   * fades out there. Directly under a light, neither side of a face is
+   * brighter than the other.
    */
   --cast-oblique: min(
     calc(var(--cast-d) / max(var(--cast-light-z) - var(--cast-elevation), 1)),
     1
   );
+
+  /*
+   * The other half of the same angle: how nearly overhead the light is.
+   * 1 directly above, 0 at 45 degrees and beyond.
+   *
+   * Obliqueness alone made "no direction" mean "no light". Every face
+   * effect scaled by it, so as the light arrived the sheen and rim faded
+   * to exactly zero -- the light vanished where it is strongest, while
+   * room mode's pool was brightest in the same spot. Measured on a clear
+   * glass tile, the lit rim ran +24.7 far from the light and 0.0 under it.
+   *
+   * So the directional effects hand over to even ones as this rises:
+   * the face gets a uniform wash, and the rim a uniform lit ring. The
+   * total amount of light stays roughly steady; only its direction goes.
+   */
+  --cast-overhead: calc(1 - var(--cast-oblique));
 
   --cast-alpha: calc(
     var(--cast-alpha-near) + var(--cast-t) * (var(--cast-alpha-far) - var(--cast-alpha-near))
@@ -281,6 +298,15 @@
     in srgb, var(--cast-edge-shade) calc(var(--cast-oblique) * 100%), transparent
   );
 
+  /* An edge lit from straight above is lit on every side: a uniform ring
+     with no dark side. It takes over from the directional pair as the
+     light comes overhead, so the lit side holds steady at every distance
+     -- measured on a clear glass tile, +20.5 to +24.7 -- while the dark
+     side fades and is replaced by light. */
+  --cast-rim-ring: color-mix(
+    in srgb, var(--cast-edge-lit) calc(var(--cast-overhead) * 100%), transparent
+  );
+
   /*
    * Pair this with a border and the edge gets drawn twice. The rim paints
    * just inside the border box, so a border sits immediately outside it.
@@ -299,6 +325,7 @@
     inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
       var(--cast-rim-shade),
+    inset 0 0 0 calc(var(--cast-edge-width) * 1px) var(--cast-rim-ring),
     var(--cast-drop);
 }
 
@@ -333,7 +360,8 @@
   box-shadow:
     inset var(--cast-edge-x) var(--cast-edge-y) 0 var(--cast-rim-lit),
     inset calc(var(--cast-edge-x) * -1) calc(var(--cast-edge-y) * -1) 0
-      var(--cast-rim-shade);
+      var(--cast-rim-shade),
+    inset 0 0 0 calc(var(--cast-edge-width) * 1px) var(--cast-rim-ring);
 }
 
 /*
@@ -490,6 +518,12 @@
    */
   --cast-sheen-alpha: calc(var(--cast-sheen) * var(--cast-oblique) * (1 - var(--cast-t)));
   --cast-shade-alpha: calc(var(--cast-shade) * var(--cast-oblique) * (1 - var(--cast-t)));
+
+  /* The face's share of the light that has no direction. Same strength
+     and falloff as the sheen, so as the gradient fades overhead an even
+     wash of the light's colour takes its place. No shade counterpart:
+     nothing on a face is turned away from a light directly above it. */
+  --cast-wash-alpha: calc(var(--cast-sheen) * var(--cast-overhead) * (1 - var(--cast-t)));
 }
 
 [data-cast~="surface"]::before {
@@ -499,6 +533,11 @@
   z-index: var(--cast-surface-z);
   pointer-events: none;
   border-radius: inherit;
+
+  /* Painted under the gradient, as background colour does. */
+  background-color: color-mix(
+    in srgb, var(--cast-light-color) calc(var(--cast-wash-alpha) * 100%), transparent
+  );
 
   /* Each end fades to a transparent stop of its OWN colour. Fading white
      straight into black would run the midpoint through grey. */

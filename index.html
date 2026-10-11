@@ -569,12 +569,14 @@
       <code>3.4</code> at <code>H&nbsp;=&nbsp;1600</code>.
     </div>
     <div class="note">
-      <strong>An object sitting on the light has no lit side.</strong> At
-      <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
-      gradient angle means nothing. The sheen used to run at full strength
-      there — <code>23.5</code> levels, its maximum — aimed in an
-      arbitrary direction. Obliqueness is zero at that point, so it now
-      measures <code>0.5</code>.
+      <strong>Under the light, the direction goes but the light stays.</strong>
+      At <code>d&nbsp;=&nbsp;0</code> the direction vector is zero, so the
+      gradient angle means nothing; the sheen used to run at full strength
+      there, aimed nowhere. Now the gradient fades as the light comes
+      overhead, and an even wash takes its place — on the rim, an even lit
+      ring. Click right on a card to see it. On a clear glass tile, the lit
+      rim used to fall from <code>+24.7</code> to <code>0.0</code> as the
+      light arrived; now it holds at <code>+22.6</code>.
     </div>
     <div class="note">
       <strong>Tune by surface, not by theme.</strong> Compositing leaves
@@ -715,14 +717,15 @@
       <code>border: 0</code> where edge mode is on.
     </div>
     <div class="note">
-      <strong>The rim fades with angle, not with distance.</strong> It
-      scales by the same obliqueness term as the sheen, because an edge
-      lit from straight above has no bright side and no dark side — at
-      <code>d&nbsp;=&nbsp;250</code> the rim delta runs <code>45.3</code>
-      levels with the light at <code>H&nbsp;=&nbsp;200</code> and
-      <code>7.6</code> at <code>H&nbsp;=&nbsp;1600</code>. Distance fade
-      stays off: a broad soft area crossing a fade threshold reads as
-      light, a hairline reads as flicker.
+      <strong>The rim's direction fades with angle; its light doesn't.</strong>
+      An edge lit from straight above has no bright side and no dark side,
+      so the directional pair scales by obliqueness — at
+      <code>d&nbsp;=&nbsp;250</code> it runs <code>45.3</code> levels with
+      the light at <code>H&nbsp;=&nbsp;200</code> and <code>7.6</code> at
+      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even lit ring takes
+      over, because that edge is lit on every side. Distance fade stays
+      off: a broad soft area crossing a fade threshold reads as light, a
+      hairline reads as flicker.
     </div>
     <div class="note">
       It does not combine with <code>shape</code>: <code>inset</code>

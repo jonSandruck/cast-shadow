@@ -229,12 +229,17 @@ That's deliberate: those are broad soft areas where falloff reads as light,
 but a hairline crossing a fade threshold reads as flicker. Multiply by
 `(1 - var(--cast-t))` yourself if you want it to fall off.
 
-**It does fade with angle**, by the same obliqueness term as the sheen —
-an edge lit from straight above has no bright side and no dark side.
-Measured on a mid-grey tile at `d = 250`, rim delta runs 45.3 levels with
-the light at `H = 200` and 7.6 at `H = 1600`. That is a different curve
-from distance fade and does not bring the flicker with it: obliqueness
-moves smoothly with position, so the hairline never steps.
+**Its direction fades with angle**, by the same obliqueness term as the
+sheen — an edge lit from straight above has no bright side and no dark
+side. Measured on a mid-grey tile at `d = 250`, the directional rim runs
+45.3 levels with the light at `H = 200` and 7.6 at `H = 1600`. That is a
+different curve from distance fade and does not bring the flicker with
+it: obliqueness moves smoothly with position, so the hairline never steps.
+
+**The light doesn't.** As the direction fades, an even lit ring takes
+over, because an edge lit from straight above is lit on every side. So
+the bright side holds steady at every distance while the dark side turns
+to light. See *overhead* under surface mode for the numbers.
 
 It is applied by mixing whatever colour you set toward transparent rather
 than by owning the alpha, so `--cast-edge-lit` and `--cast-edge-shade`
@@ -418,8 +423,9 @@ Two terms fix that.
 **Obliqueness** is `d / (H - h)`: how far the light is off to one side
 compared with how far up. It is 0 directly overhead, 1 at 45 degrees, and
 clamps there because the look saturates well before the ratio does. The
-sheen and the rim both scale by it, so a face lit from straight above has
-no lit side and one lit from a low raking angle has a strong one.
+directional parts of the sheen and the rim both scale by it, so a face lit
+from straight above has no brighter side and one lit from a low raking
+angle has a strong one.
 
 Measured on a mid-grey tile, sheen spread in levels of luminance, at the
 default light height of 600:
@@ -435,6 +441,43 @@ light, so `--cast-ux` and `--cast-uy` are both zero and the gradient angle
 is whatever `atan2(0, 0)` returns. The sheen used to be at full strength
 there — 23.5 levels, its maximum — pointing nowhere in particular. Now it
 is 0.5.
+
+**Overhead** is the other half of the same angle: `1 - obliqueness`, 1
+straight above and 0 from 45 degrees out. It exists because obliqueness
+alone was half a fix. Every face effect scaled by it, so as the light
+arrived over a surface the sheen and the rim faded to exactly zero — the
+light vanished where it is strongest, right where room mode's pool is
+brightest. Directly under a lamp, neither side of a face is brighter than
+the other, but the face is still lit.
+
+So as the light comes overhead, the directional effects hand over to even
+ones: a uniform wash on the face, and a uniform lit ring on the rim. The
+amount of light stays about the same; only its direction goes. Measured
+on a clear glass tile over mid-grey:
+
+| light distance | face L\* | lit rim | dark rim |
+| --- | --- | --- | --- |
+| 900 | 49.0 | +24.7 | −21.2 |
+| 300 | 51.6 | +20.5 | −0.9 |
+| 0, before | 48.7 | 0.0 | 0.0 |
+| 0, now | 56.2 | +22.6 | +22.6 |
+
+What this changes on a real page:
+
+- **Light mode, pale surfaces:** nothing. A white wash and a white ring on
+  a near-white card have no headroom; 0.0% of pixels moved.
+- **Dark mode:** a card under the lamp gains a lit ring and lifts about
+  +7 L\*. Things with their own background on that card, like code chips,
+  don't lift, so they stand out a little more there.
+- **Far from the light:** nothing. With the light off to one side, every
+  viewport of the demo was pixel-identical.
+- **Reduced motion and no JavaScript:** the static fallback puts the light
+  at a middling distance, inside 45 degrees, so it picks up a little of
+  both. On a dark card, +1.1 L\* on the face.
+
+Still true and unchanged: near the light, a pale card in light mode loses
+its dark rim, because nothing on it is turned away from the light. It was
+like that before this change too.
 
 **Source size** sets `--cast-sheen-reach`, the width of the terminator. A
 small hard source draws a tight, high-contrast falloff; a big soft one
