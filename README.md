@@ -751,9 +751,11 @@ custom properties and fall back to the static shadow.
 
 ## Demo
 
-`index.html` opens with a hero for the library, then shows each capability
-with a live example and its code, then gets technical: install, how it
-works, and the full reference. Serve the folder and open it, and the light
+`index.html` opens with a hero for the library. Then it shows the light
+(position, height, size, colour, room light) and the objects it lights
+(elevation, shape, surface, edge, photos, glass), each with a live example,
+its code, and a closed "How it works" panel. It ends with Get started and
+the full reference. Serve the folder and open it, and the light
 follows your pointer. Tune has a switch to place it with a click instead.
 
 The library is still the two files at the root. `demo/img/` holds

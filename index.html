@@ -135,6 +135,13 @@
     border-left: 2px solid var(--line); padding-left: 14px; margin: 18px 0;
   }
   .note strong { color: var(--ink); }
+  /* Each feature keeps its reasoning and measurements one click away. */
+  .how { margin: 22px 0 0; max-width: 68ch; }
+  .how summary {
+    cursor: pointer; width: fit-content; font-size: 14px; font-weight: 600; color: var(--muted);
+  }
+  .how summary:hover { color: var(--ink); }
+  .how summary:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; border-radius: 3px; }
 
   /* ---- Example blocks ------------------------------------------------ */
   .demo {
@@ -318,11 +325,9 @@
 <div class="bar">
   <strong data-cast>cast-shadow</strong>
   <nav>
-    <a href="#elevation">Elevation</a>
     <a href="#light">Light</a>
-    <a href="#modes">Modes</a>
-    <a href="#install">Install</a>
-    <a href="#how">How it works</a>
+    <a href="#objects">Objects</a>
+    <a href="#install">Get started</a>
     <a href="#reference">Reference</a>
   </nav>
   <button class="theme-toggle" type="button" id="theme-toggle">Dark</button>
@@ -341,7 +346,7 @@
         highlights and room light.</p>
       <div class="hero-actions">
         <a class="btn" href="#install" data-cast="surface edge" style="--cast-elevation: 16">Get started</a>
-        <a class="btn" href="#elevation" data-cast="edge" style="--cast-elevation: 12">See what it does</a>
+        <a class="btn" href="#light" data-cast="edge" style="--cast-elevation: 12">See what it does</a>
       </div>
       <p class="hero-hint">Move your pointer and the light follows. To place it
         with a click instead, open Tune.</p>
@@ -355,49 +360,11 @@
     </div>
   </header>
 
-  <!-- ================= ELEVATION ================= -->
-  <section class="section" id="elevation">
-    <p class="kicker">What it does</p>
-    <h2>Elevation</h2>
-    <p>
-      Give anything a height above the page. Higher objects throw longer,
-      softer shadows, and both come from that one number.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <div class="tile" data-cast style="--cast-elevation: 4">4</div>
-        <div class="tile" data-cast style="--cast-elevation: 20">20</div>
-        <div class="tile" data-cast style="--cast-elevation: 48">48</div>
-        <div class="tile" data-cast style="--cast-elevation: 96">96</div>
-      </div>
-      <pre><code>.card   { <b>--cast-elevation</b>: 20; }
-.dialog { <b>--cast-elevation</b>: 80; }</code></pre>
-    </div>
-
-    <h3>Smaller objects</h3>
-    <p>
-      Avatars, buttons and inline chips want low elevations. A button that
-      floats 40px off the page reads as a mistake.
-    </p>
-
-    <div class="stage" style="gap:22px">
-      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
-        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
-        <div>
-          <h4>Ada Bell</h4>
-          <p>Lighting, stage &amp; screen</p>
-        </div>
-      </div>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
-      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
-    </div>
-  </section>
-
-  <!-- ================= LIGHT ================= -->
+  <!-- ================= THE LIGHT ================= -->
   <section class="section" id="light">
     <p class="kicker">What it does</p>
-    <h2>Position, height, size, colour</h2>
+    <h2>The light</h2>
+    <p>One light for the whole page, set with five properties.</p>
 
     <pre style="margin-top:18px"><code>:root {
   <b>--cast-light-x</b>: 50%;    /* percentages, px, vw and vh all work */
@@ -407,7 +374,38 @@
   <b>--cast-light-color</b>: var(--cast-6500k);
 }</code></pre>
 
-    <h3 id="light-size">Size is the softness dial</h3>
+    <h3 id="light-position">Position</h3>
+    <p>
+      <code>--cast-light-x</code> and <code>--cast-light-y</code> place the
+      light in the viewport. On this page it follows your pointer, and every
+      shadow, sheen and rim turns to face it.
+    </p>
+
+    <h3 id="light-height">Height</h3>
+    <p>
+      <code>--cast-light-z</code> is how far the light sits above the page.
+      A low lamp throws long, soft shadows. A high one throws short, tight
+      ones.
+    </p>
+
+    <div class="demo split">
+      <figure style="--cast-light-z: 400">
+        <div class="stage" style="border:0;padding:20px 0">
+          <div class="tile" data-cast style="--cast-elevation: 24"></div>
+          <div class="tile" data-cast style="--cast-elevation: 64"></div>
+        </div>
+        <figcaption><code>400</code> — a low lamp</figcaption>
+      </figure>
+      <figure style="--cast-light-z: 1600">
+        <div class="stage" style="border:0;padding:20px 0">
+          <div class="tile" data-cast style="--cast-elevation: 24"></div>
+          <div class="tile" data-cast style="--cast-elevation: 64"></div>
+        </div>
+        <figcaption><code>1600</code> — high overhead</figcaption>
+      </figure>
+    </div>
+
+    <h3 id="light-size">Size</h3>
     <p>
       It is the width of the source, so it changes how soft a shadow is
       without touching where it falls. Soft interface shadows imply a very
@@ -431,7 +429,7 @@
       </figure>
     </div>
 
-    <h3 id="light-colour">Colour temperature</h3>
+    <h3 id="light-colour">Colour</h3>
     <p>
       <code>--cast-light-color</code> takes any colour, so a hex or an
       <code>oklch()</code> works. The Kelvin scale ships as named constants,
@@ -463,163 +461,24 @@
   <b>--cast-light-color</b>: #ffb870;
 }</code></pre>
     </div>
-  </section>
-
-  <!-- ================= MODES ================= -->
-  <section class="section" id="modes">
-    <p class="kicker">What it does</p>
-    <h2>Five ways to be lit</h2>
-    <p>
-      All opt-in through the same attribute, and they compose where it makes
-      sense: <code>data-cast="surface edge"</code> applies both.
-    </p>
-
-    <h3 id="mode-default">Default — a projected drop shadow</h3>
-    <p>Nothing but <code>data-cast</code>. The shadow follows the border box
-      and respects <code>border-radius</code>.</p>
-    <div class="demo split">
-      <div class="stage">
-        <div class="chip" data-cast></div>
-        <div class="chip pill" data-cast></div>
-        <div class="chip block" data-cast></div>
-      </div>
-      <pre><code>&lt;div class="chip" <b>data-cast</b>&gt;&lt;/div&gt;</code></pre>
+    <details class="how">
+      <summary>How it works</summary>
+    <div class="note">
+      <strong>Neutral is 6500K here, not 4000K.</strong> sRGB's white point
+      <em>is</em> D65, so 6500K is white by definition and every warmer
+      temperature reads yellow on screen. 4000K is "neutral white" in a room
+      and a visible tungsten wash on a display.
     </div>
-
-    <h3 id="mode-shape">Shape — trace the silhouette</h3>
-    <p>
-      For a cutout PNG or an SVG, <code>shape</code> swaps
-      <code>box-shadow</code> for <code>drop-shadow</code> so the shadow
-      follows the alpha silhouette instead of the box.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <figure>
-          <svg class="mark" data-cast width="130" height="130" viewBox="0 0 100 100" role="img" aria-label="Star, box mode">
-            <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
-          </svg>
-          <figcaption>default</figcaption>
-        </figure>
-        <figure>
-          <svg class="mark" data-cast="shape" width="130" height="130" viewBox="0 0 100 100" role="img" aria-label="Star, shape mode">
-            <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
-          </svg>
-          <figcaption><code>shape</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;</code></pre>
+    <div class="note">
+      <strong>Shadows stay neutral, deliberately.</strong> A shadow is only
+      tinted when some <em>other</em> source fills it — sun plus sky, or a
+      lamp plus a window — and that is a second light, not a property of
+      this one. One bulb in a room bounces off the walls at roughly its own
+      temperature, so its shadows come out darker, not bluer.
     </div>
+    </details>
 
-    <h3 id="mode-surface">Surface — light the object's own face</h3>
-    <p>
-      A sheen angled toward the light and shading away from it, plus fine
-      grain. This is what stops an element reading as a flat rectangle with
-      a shadow stuck under it.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <figure>
-          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
-          <figcaption>shadow only</figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare" data-cast="surface" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;div <b>data-cast="surface"</b>&gt;…&lt;/div&gt;
-
-/* tune per element */
-.panel {
-  <b>--cast-sheen</b>: 0.14;  /* lit edge   */
-  <b>--cast-shade</b>: 0.09;  /* unlit edge */
-}</code></pre>
-    </div>
-
-    <h3>The layer, side by side</h3>
-    <p>
-      Same photo, same settings, one property different. On the left the
-      modelling sits at its default layer and the image covers it entirely.
-      On the right it is lifted over the photo.
-    </p>
-
-    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));max-width:640px">
-      <figure>
-        <article class="article" data-cast="surface edge" style="--cast-elevation: 22">
-          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
-        </article>
-        <figcaption><code>--cast-surface-z: -1</code> — hidden</figcaption>
-      </figure>
-      <figure>
-        <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
-          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
-        </article>
-        <figcaption><code>--cast-surface-z: 2</code> — lifted</figcaption>
-      </figure>
-    </div>
-
-    <h3 id="mode-glass">Glass — for surfaces you can see through</h3>
-    <p>
-      Not a mode on its own: a word you add next to <code>surface</code>
-      when the element's background is translucent. Without it, the grain
-      gets louder and lighter the clearer the background gets.
-    </p>
-    <div class="demo split">
-      <div class="stage photo">
-        <figure>
-          <div class="tile bare clear" data-cast="surface edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge</code></figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare clear" data-cast="surface edge glass" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge glass</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;div <b>data-cast="surface edge glass"</b>&gt;…&lt;/div&gt;
-
-/* or write it yourself */
-.panel {
-  isolation: auto;
-  <b>--cast-surface-z</b>: 2;
-  <b>--cast-grain-z</b>: 9999;
-  <b>--cast-edge-lit</b>: color-mix(in srgb,
-    var(--cast-light-color) 50%, transparent);
-  <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
-  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
-  <b>--cast-grain-blend</b>: soft-light;
-}</code></pre>
-    </div>
-
-    <h3 id="mode-edge">Edge — a directional rim</h3>
-    <p>
-      A hairline lit on the side facing the light and shaded on the side
-      away from it. Two inset shadows reusing the vector already on the
-      element. It is the cheapest thing here and does the most for the
-      illusion.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <figure>
-          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
-          <figcaption>shadow only</figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare" data-cast="edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>edge</code></figcaption>
-        </figure>
-        <figure>
-          <div class="tile bare" data-cast="surface edge" style="--cast-elevation: 40"></div>
-          <figcaption><code>surface edge</code></figcaption>
-        </figure>
-      </div>
-      <pre><code>&lt;div <b>data-cast="surface edge"</b>&gt;…&lt;/div&gt;
-
-.panel {
-  <b>--cast-edge-width</b>: 1;
-}</code></pre>
-    </div>
-
-    <h3 id="mode-room">Room — light the space</h3>
+    <h3 id="mode-room">Room light</h3>
     <p>
       A pool centred on the lamp falling off to a vignette at the edges.
       Works on the page or on any element. <strong>This page is in room
@@ -635,42 +494,74 @@
   <b>--cast-grain-size</b>: 280;  /* dither scale, px */
 }</code></pre>
     </div>
-  </section>
-
-  <!-- ================= INSTALL ================= -->
-  <section class="section" id="install">
-    <p class="kicker">Getting started</p>
-    <h2>Install</h2>
-    <p>Two files, no dependencies, no build step.</p>
-
-    <div class="demo split">
-      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
-&lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;</code></pre>
-      <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
-  …
-&lt;/article&gt;</code></pre>
-    </div>
-
-    <p style="margin-top:20px">That is the whole setup. The script starts
-      itself, picks up elements added later, and needs no configuration.</p>
-
+    <details class="how">
+      <summary>How it works</summary>
     <div class="note">
-      <strong>ES modules do not load over <code>file://</code>.</strong>
-      Opening the page by double-clicking it fails with a CORS error. Serve
-      the folder instead — <code>python3 -m http.server</code> is enough.
+      Room mode needs <strong>no JavaScript at all</strong>. The pool's
+      position comes from numbers already on the element, and nothing here
+      touches <code>background-image</code> — it composites over whatever
+      backgrounds you already have. It does use both pseudo-elements, so it
+      cannot share an element with <code>surface</code>. Put room on the
+      container and surface on its contents.
     </div>
+    </details>
   </section>
 
-  <!-- ================= HOW IT WORKS ================= -->
-  <section class="section" id="how">
-    <p class="kicker">Under the hood</p>
-    <h2>How it works</h2>
+  <!-- ================= OBJECTS ================= -->
+  <section class="section" id="objects">
+    <p class="kicker">What it does</p>
+    <h2>Objects</h2>
     <p>
-      Everything shown above, explained: the model, the reasoning behind
-      each mode, and the measurements behind the defaults.
+      All opt-in through the same attribute, and they compose where it makes
+      sense: <code>data-cast="surface edge"</code> applies both.
     </p>
 
-    <h3 id="how-model">The model</h3>
+    <h3 id="elevation">Elevation</h3>
+    <p>
+      Give anything a height above the page. Higher objects throw longer,
+      softer shadows, and both come from that one number.
+    </p>
+    <div class="demo split">
+      <div class="stage">
+        <div class="tile" data-cast style="--cast-elevation: 4">4</div>
+        <div class="tile" data-cast style="--cast-elevation: 20">20</div>
+        <div class="tile" data-cast style="--cast-elevation: 48">48</div>
+        <div class="tile" data-cast style="--cast-elevation: 96">96</div>
+      </div>
+      <pre><code>.card   { <b>--cast-elevation</b>: 20; }
+.dialog { <b>--cast-elevation</b>: 80; }</code></pre>
+    </div>
+
+    <p>Nothing but <code>data-cast</code>. The shadow follows the border box
+      and respects <code>border-radius</code>.</p>
+    <div class="demo split">
+      <div class="stage">
+        <div class="chip" data-cast></div>
+        <div class="chip pill" data-cast></div>
+        <div class="chip block" data-cast></div>
+      </div>
+      <pre><code>&lt;div class="chip" <b>data-cast</b>&gt;&lt;/div&gt;</code></pre>
+    </div>
+
+    <p>
+      Avatars, buttons and inline chips want low elevations. A button that
+      floats 40px off the page reads as a mistake.
+    </p>
+
+    <div class="stage" style="gap:22px">
+      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
+        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
+        <div>
+          <h4>Ada Bell</h4>
+          <p>Lighting, stage &amp; screen</p>
+        </div>
+      </div>
+      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
+      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
+      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
+    </div>
+    <details class="how">
+      <summary>How it works</summary>
     <p>
       For a light at height <code>H</code> and an object at height
       <code>h</code>, sitting a horizontal distance <code>d</code> from the
@@ -708,23 +599,33 @@
       set. If a shadow is the wrong length, change the object's height or
       the light's.
     </div>
+    </details>
 
-    <h3 id="how-light">The light</h3>
-    <div class="note">
-      <strong>Neutral is 6500K here, not 4000K.</strong> sRGB's white point
-      <em>is</em> D65, so 6500K is white by definition and every warmer
-      temperature reads yellow on screen. 4000K is "neutral white" in a room
-      and a visible tungsten wash on a display.
+    <h3 id="mode-shape">Shape</h3>
+    <p>
+      For a cutout PNG or an SVG, <code>shape</code> swaps
+      <code>box-shadow</code> for <code>drop-shadow</code> so the shadow
+      follows the alpha silhouette instead of the box.
+    </p>
+    <div class="demo split">
+      <div class="stage">
+        <figure>
+          <svg class="mark" data-cast width="130" height="130" viewBox="0 0 100 100" role="img" aria-label="Star, box mode">
+            <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
+          </svg>
+          <figcaption>default</figcaption>
+        </figure>
+        <figure>
+          <svg class="mark" data-cast="shape" width="130" height="130" viewBox="0 0 100 100" role="img" aria-label="Star, shape mode">
+            <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
+          </svg>
+          <figcaption><code>shape</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;</code></pre>
     </div>
-    <div class="note">
-      <strong>Shadows stay neutral, deliberately.</strong> A shadow is only
-      tinted when some <em>other</em> source fills it — sun plus sky, or a
-      lamp plus a window — and that is a second light, not a property of
-      this one. One bulb in a room bounces off the walls at roughly its own
-      temperature, so its shadows come out darker, not bluer.
-    </div>
-
-    <h3 id="how-shape">Shape</h3>
+    <details class="how">
+      <summary>How it works</summary>
     <div class="note">
       <code>filter</code> creates a stacking context <strong>and</strong> a
       containing block, so any <code>position: fixed</code> descendant will
@@ -733,8 +634,35 @@
       <code>.png</code> photo has no transparency, so the box is already
       correct and cheaper.
     </div>
+    </details>
 
-    <h3 id="how-surface">Surface</h3>
+    <h3 id="mode-surface">Surface</h3>
+    <p>
+      A sheen angled toward the light and shading away from it, plus fine
+      grain. This is what stops an element reading as a flat rectangle with
+      a shadow stuck under it.
+    </p>
+    <div class="demo split">
+      <div class="stage">
+        <figure>
+          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
+          <figcaption>shadow only</figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare" data-cast="surface" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface"</b>&gt;…&lt;/div&gt;
+
+/* tune per element */
+.panel {
+  <b>--cast-sheen</b>: 0.14;  /* lit edge   */
+  <b>--cast-shade</b>: 0.09;  /* unlit edge */
+}</code></pre>
+    </div>
+    <details class="how">
+      <summary>How it works</summary>
     <div class="note">
       <strong>The light's height and size reach the face.</strong> Sheen
       strength follows how oblique the light is —
@@ -775,10 +703,197 @@
       card face is <code>0</code>. Lift it with
       <code>--cast-surface-z: 2</code>, at the cost of tinting whatever it
       crosses. With <code>edge</code> on as well, the same number lifts the
-      rim; see <a href="#photos">Media cards</a>.
+      rim; see <a href="#photos">Photos and media</a>.
+    </div>
+    </details>
+
+    <h3 id="mode-edge">Edge</h3>
+    <p>
+      A hairline lit on the side facing the light and shaded on the side
+      away from it. Two inset shadows reusing the vector already on the
+      element. It is the cheapest thing here and does the most for the
+      illusion.
+    </p>
+    <div class="demo split">
+      <div class="stage">
+        <figure>
+          <div class="tile bare" data-cast style="--cast-elevation: 40"></div>
+          <figcaption>shadow only</figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare" data-cast="edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>edge</code></figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare" data-cast="surface edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface edge"</b>&gt;…&lt;/div&gt;
+
+.panel {
+  <b>--cast-edge-width</b>: 1;
+}</code></pre>
+    </div>
+    <details class="how">
+      <summary>How it works</summary>
+    <div class="note">
+      <strong>Don't pair it with a border.</strong> A border and a lit rim
+      are two ways to draw the same edge, and running both draws it twice.
+      The rim paints just inside the border box, so a border sits
+      immediately outside it. Measured across a card's left edge in light
+      mode, luminance ran <code>176 → 216 → 171 → 246</code> with a border
+      and <code>179 → 171 → 221 → 245</code> without: two contrast
+      reversals inside 2px, versus one clean ramp. It reads as a
+      misregistered stroke. Every card on this page sets
+      <code>border: 0</code> where edge mode is on.
+    </div>
+    <div class="note">
+      <strong>The rim's direction fades with angle; its light doesn't.</strong>
+      An edge lit from straight above has no bright side and no dark side,
+      so the directional pair scales by obliqueness — at
+      <code>d&nbsp;=&nbsp;250</code> it runs <code>45.3</code> levels with
+      the light at <code>H&nbsp;=&nbsp;200</code> and <code>7.6</code> at
+      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even ring takes over
+      in <code>--cast-edge-overhead</code>: just darker than the face on a
+      solid tile, whose bevel tilts away from an overhead lamp, and lit on
+      glass. Distance fade stays
+      off: a broad soft area crossing a fade threshold reads as light, a
+      hairline reads as flicker.
+    </div>
+    <div class="note">
+      It does not combine with <code>shape</code>: <code>inset</code>
+      follows the border box, and shape mode clears <code>box-shadow</code>
+      outright.
+    </div>
+    <div class="note">
+      <strong>An opaque child hides this too.</strong> An inset shadow
+      paints above the element's background but below its content, and
+      there is no <code>z-index</code> for it — it is not a layer. On a
+      card with a full-bleed photo the rim measured
+      <strong>1&ndash;3 levels</strong> of luminance, which is nothing.
+      Adding <code>surface</code> fixes it: the rim moves onto surface
+      mode's layer and rides <code>--cast-surface-z</code> with the sheen,
+      measuring <strong>23&ndash;68</strong> lifted. At the default
+      <code>-1</code> it paints in the same place as before, so nothing
+      changes for a card whose own background shows. Want a lifted rim and
+      no sheen? Add <code>surface</code> and set <code>--cast-sheen</code>
+      and <code>--cast-shade</code> to <code>0</code>.
+    </div>
+    </details>
+
+    <h3 id="photos">Photos and media</h3>
+    <p>
+      Images run full bleed, so both the sheen and the rim would be hidden
+      behind them. These lift both with <code>--cast-surface-z: 2</code>,
+      which puts the modelling over the photo where the light would
+      actually fall. The rim does most of the work here — a photo brings
+      its own detail, so a soft gradient over it stays quiet while a
+      hairline at the border reads immediately. The three are picked for
+      luminance: a bright portrait, a mid-tone cup of coffee, and a nearly
+      black field of galaxies.
+    </p>
+
+    <div class="cards">
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+        <img src="demo/img/portrait.jpg" alt="Astronaut Eileen Collins in a flight suit" width="480" height="320">
+        <div class="body">
+          <p class="meta">Bright subject</p>
+          <h4>Where there is no headroom</h4>
+          <p>A pale face and a white suit are already near the top of the range, so the sheen has almost nowhere to go. What form you see comes from the shaded corner.</p>
+        </div>
+      </article>
+
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+        <img src="demo/img/coffee.jpg" alt="A cup of coffee on a saucer, seen from above" width="480" height="320">
+        <div class="body">
+          <p class="meta">Mid tone</p>
+          <h4>Both ends do some work</h4>
+          <p>Around the middle of the range there is room to move in either direction, so the sheen and the shading both read. This is the easy case.</p>
+        </div>
+      </article>
+
+      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+        <img src="demo/img/deepfield.jpg" alt="The Hubble deep field, galaxies on black" width="480" height="320">
+        <div class="body">
+          <p class="meta">Dark subject</p>
+          <h4>Where the highlight finally shows</h4>
+          <p>Mean luminance under 20. The shaded end has nothing left to take away, and the lit end is the only one you can see — the exact inverse of the portrait.</p>
+        </div>
+      </article>
     </div>
 
-    <h3 id="how-glass">Glass</h3>
+    <div class="demo" style="margin-top:22px">
+      <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>
+         style="<b>--cast-elevation</b>: 22; <b>--cast-surface-z</b>: 2"&gt;
+  &lt;img src="…" alt="…"&gt;
+  &lt;div class="body"&gt;…&lt;/div&gt;
+&lt;/article&gt;</code></pre>
+    </div>
+
+    <p>
+      Same photo, same settings, one property different. On the left the
+      modelling sits at its default layer and the image covers it entirely.
+      On the right it is lifted over the photo.
+    </p>
+
+    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));max-width:640px">
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: -1</code> — hidden</figcaption>
+      </figure>
+      <figure>
+        <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
+          <img src="demo/img/cat.jpg" alt="A tabby cat" width="480" height="320">
+        </article>
+        <figcaption><code>--cast-surface-z: 2</code> — lifted</figcaption>
+      </figure>
+    </div>
+
+    <div class="note">
+      <strong>Lifting the modelling costs contrast.</strong> On this page's
+      muted body text, a sheen crossing the type takes it from
+      <code>5.27:1</code> to <code>4.54:1</code> at <code>0.07</code> and
+      <code>3.92:1</code> at <code>0.14</code> — below AA. Lift it for a
+      card whose face is mostly photo, and leave
+      <code>--cast-surface-z</code> alone for a text-heavy one.
+    </div>
+
+    <h3 id="mode-glass">Glass</h3>
+    <p>
+      Not a mode on its own: a word you add next to <code>surface</code>
+      when the element's background is translucent. Without it, the grain
+      gets louder and lighter the clearer the background gets.
+    </p>
+    <div class="demo split">
+      <div class="stage photo">
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge</code></figcaption>
+        </figure>
+        <figure>
+          <div class="tile bare clear" data-cast="surface edge glass" style="--cast-elevation: 40"></div>
+          <figcaption><code>surface edge glass</code></figcaption>
+        </figure>
+      </div>
+      <pre><code>&lt;div <b>data-cast="surface edge glass"</b>&gt;…&lt;/div&gt;
+
+/* or write it yourself */
+.panel {
+  isolation: auto;
+  <b>--cast-surface-z</b>: 2;
+  <b>--cast-grain-z</b>: 9999;
+  <b>--cast-edge-lit</b>: color-mix(in srgb,
+    var(--cast-light-color) 50%, transparent);
+  <b>--cast-edge-shade</b>: rgb(0 0 0 / 0.45);
+  <b>--cast-edge-overhead</b>: var(--cast-edge-lit);
+  <b>--cast-grain-blend</b>: soft-light;
+}</code></pre>
+    </div>
+    <details class="how">
+      <summary>How it works</summary>
     <div class="note">
       <strong>Why it happens.</strong> Surface mode isolates the element so
       its layers can sit under the content. But <code>mix-blend-mode</code>
@@ -829,155 +944,37 @@
       shadow to outside its box, so a clear tile never shows its shadow
       through itself the way real glass would.
     </div>
+    </details>
+  </section>
 
-    <h3 id="how-edge">Edge</h3>
-    <div class="note">
-      <strong>Don't pair it with a border.</strong> A border and a lit rim
-      are two ways to draw the same edge, and running both draws it twice.
-      The rim paints just inside the border box, so a border sits
-      immediately outside it. Measured across a card's left edge in light
-      mode, luminance ran <code>176 → 216 → 171 → 246</code> with a border
-      and <code>179 → 171 → 221 → 245</code> without: two contrast
-      reversals inside 2px, versus one clean ramp. It reads as a
-      misregistered stroke. Every card on this page sets
-      <code>border: 0</code> where edge mode is on.
-    </div>
-    <div class="note">
-      <strong>The rim's direction fades with angle; its light doesn't.</strong>
-      An edge lit from straight above has no bright side and no dark side,
-      so the directional pair scales by obliqueness — at
-      <code>d&nbsp;=&nbsp;250</code> it runs <code>45.3</code> levels with
-      the light at <code>H&nbsp;=&nbsp;200</code> and <code>7.6</code> at
-      <code>H&nbsp;=&nbsp;1600</code>. As it fades, an even ring takes over
-      in <code>--cast-edge-overhead</code>: just darker than the face on a
-      solid tile, whose bevel tilts away from an overhead lamp, and lit on
-      glass. Distance fade stays
-      off: a broad soft area crossing a fade threshold reads as light, a
-      hairline reads as flicker.
-    </div>
-    <div class="note">
-      It does not combine with <code>shape</code>: <code>inset</code>
-      follows the border box, and shape mode clears <code>box-shadow</code>
-      outright.
-    </div>
-    <div class="note">
-      <strong>An opaque child hides this too.</strong> An inset shadow
-      paints above the element's background but below its content, and
-      there is no <code>z-index</code> for it — it is not a layer. On a
-      card with a full-bleed photo the rim measured
-      <strong>1&ndash;3 levels</strong> of luminance, which is nothing.
-      Adding <code>surface</code> fixes it: the rim moves onto surface
-      mode's layer and rides <code>--cast-surface-z</code> with the sheen,
-      measuring <strong>23&ndash;68</strong> lifted. At the default
-      <code>-1</code> it paints in the same place as before, so nothing
-      changes for a card whose own background shows. Want a lifted rim and
-      no sheen? Add <code>surface</code> and set <code>--cast-sheen</code>
-      and <code>--cast-shade</code> to <code>0</code>.
-    </div>
+  <!-- ================= GET STARTED ================= -->
+  <section class="section" id="install">
+    <p class="kicker">Use it</p>
+    <h2>Get started</h2>
+    <p>Two files, no dependencies, no build step.</p>
 
-    <h3 id="how-room">Room</h3>
-    <div class="note">
-      Room mode needs <strong>no JavaScript at all</strong>. The pool's
-      position comes from numbers already on the element, and nothing here
-      touches <code>background-image</code> — it composites over whatever
-      backgrounds you already have. It does use both pseudo-elements, so it
-      cannot share an element with <code>surface</code>. Put room on the
-      container and surface on its contents.
-    </div>
-
-    <h3 id="photos">Media cards</h3>
-    <p>
-      Images run full bleed, so both the sheen and the rim would be hidden
-      behind them. These lift both with <code>--cast-surface-z: 2</code>,
-      which puts the modelling over the photo where the light would
-      actually fall. The rim does most of the work here — a photo brings
-      its own detail, so a soft gradient over it stays quiet while a
-      hairline at the border reads immediately. The three are picked for
-      luminance: a bright portrait, a mid-tone street scene, and a nearly
-      black field of galaxies.
-    </p>
-
-    <div class="cards">
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
-        <img src="demo/img/portrait.jpg" alt="Astronaut Eileen Collins in a flight suit" width="480" height="320">
-        <div class="body">
-          <p class="meta">Bright subject</p>
-          <h4>Where there is no headroom</h4>
-          <p>A pale face and a white suit are already near the top of the range, so the sheen has almost nowhere to go. What form you see comes from the shaded corner.</p>
-        </div>
-      </article>
-
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
-        <img src="demo/img/coffee.jpg" alt="A cup of coffee on a saucer, seen from above" width="480" height="320">
-        <div class="body">
-          <p class="meta">Mid tone</p>
-          <h4>Both ends do some work</h4>
-          <p>Around the middle of the range there is room to move in either direction, so the sheen and the shading both read. This is the easy case.</p>
-        </div>
-      </article>
-
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 22; --cast-surface-z: 2">
-        <img src="demo/img/deepfield.jpg" alt="The Hubble deep field, galaxies on black" width="480" height="320">
-        <div class="body">
-          <p class="meta">Dark subject</p>
-          <h4>Where the highlight finally shows</h4>
-          <p>Mean luminance under 20. The shaded end has nothing left to take away, and the lit end is the only one you can see — the exact inverse of the portrait.</p>
-        </div>
-      </article>
-    </div>
-
-    <div class="demo" style="margin-top:22px">
-      <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>
-         style="<b>--cast-elevation</b>: 22; <b>--cast-surface-z</b>: 2"&gt;
-  &lt;img src="…" alt="…"&gt;
-  &lt;div class="body"&gt;…&lt;/div&gt;
+    <div class="demo split">
+      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
+&lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
+  …
 &lt;/article&gt;</code></pre>
     </div>
 
+    <p style="margin-top:20px">That is the whole setup. The script starts
+      itself, picks up elements added later, and needs no configuration.</p>
+
     <div class="note">
-      <strong>Lifting the modelling costs contrast.</strong> On this page's
-      muted body text, a sheen crossing the type takes it from
-      <code>5.27:1</code> to <code>4.54:1</code> at <code>0.07</code> and
-      <code>3.92:1</code> at <code>0.14</code> — below AA. Lift it for a
-      card whose face is mostly photo, and leave
-      <code>--cast-surface-z</code> alone for a text-heavy one.
-    </div>
-
-    <h3>Text-only cards</h3>
-    <p>
-      Nothing opaque in the way, so the modelling sits under the content at
-      its default layer and the text keeps its full contrast.
-    </p>
-
-    <div class="cards">
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
-        <div class="body">
-          <p class="meta">Performance</p>
-          <h4>Two scroll reads a frame</h4>
-          <p>Geometry is measured once and cached in document space. The scroll path reads <code>scrollX</code> and <code>scrollY</code> a single time and does pure arithmetic — no layout reads, no thrash.</p>
-        </div>
-      </article>
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
-        <div class="body">
-          <p class="meta">Culling</p>
-          <h4>Only what you can see</h4>
-          <p>An <code>IntersectionObserver</code> skips anything offscreen, so a page with a thousand elements computes the dozen in view. Writes are skipped when a value hasn't changed.</p>
-        </div>
-      </article>
-      <article class="article" data-cast="surface edge" style="--cast-elevation: 18">
-        <div class="body">
-          <p class="meta">Fallback</p>
-          <h4>It degrades to a shadow</h4>
-          <p>Under <code>prefers-reduced-motion</code> the script stops writing and the stylesheet falls back to a static shadow. The same applies if the script never runs at all.</p>
-        </div>
-      </article>
+      <strong>ES modules do not load over <code>file://</code>.</strong>
+      Opening the page by double-clicking it fails with a CORS error. Serve
+      the folder instead — <code>python3 -m http.server</code> is enough.
     </div>
   </section>
 
   <!-- ================= REFERENCE ================= -->
   <section class="section" id="reference">
-    <p class="kicker">Reference</p>
-    <h2>Every property</h2>
+    <p class="kicker">Use it</p>
+    <h2>Reference</h2>
 
     <h3>The light</h3>
     <div class="scroller"><table>
@@ -1070,6 +1067,17 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       <code>z</code> is not. Height lives in CSS with elevation, because
       they have to be in the same unit space for the projection to mean
       anything.
+    </div>
+
+    <h3>Performance</h3>
+    <div class="note">
+      <strong>Two scroll reads a frame.</strong> Geometry is measured once and cached in document space. The scroll path reads <code>scrollX</code> and <code>scrollY</code> a single time and does pure arithmetic — no layout reads, no thrash.
+    </div>
+    <div class="note">
+      <strong>Only what you can see.</strong> An <code>IntersectionObserver</code> skips anything offscreen, so a page with a thousand elements computes the dozen in view. Writes are skipped when a value hasn't changed.
+    </div>
+    <div class="note">
+      <strong>It degrades to a shadow.</strong> Under <code>prefers-reduced-motion</code> the script stops writing and the stylesheet falls back to a static shadow. The same applies if the script never runs at all.
     </div>
 
     <h3>Known limitations</h3>
