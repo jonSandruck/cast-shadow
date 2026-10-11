@@ -560,17 +560,40 @@
  * layers at -1 paint BEHIND the element's own background -- on an opaque
  * tile the sheen measured 0.00, gone. So both layers come up above the
  * background as well. Measured with all three, the sheen matches the
- * isolated version at every alpha, and an opaque glass tile is identical
- * to an ordinary one.
+ * isolated version at every alpha, and an opaque glass tile's sheen and
+ * grain are identical to an ordinary one's. Its rim is stronger, by
+ * design; see below.
  *
  * The cost is the same one --cast-surface-z: 2 always carries: both
  * layers now sit over the content, so they tint the text. And it does
  * nothing on its own -- it only means something next to surface.
+ *
+ * It also strengthens the rim. A see-through face no longer stands out
+ * from what is behind it, so the rim is left doing all the outlining --
+ * and real glass is brightest at its edges anyway, because light that
+ * enters the face is trapped inside the pane and leaks out at the edge.
+ * The target is parity: the same edge definition an opaque card gets.
+ * Over the demo's window photograph, with the light up and to the left:
+ *
+ *                         lit side    shade side
+ *   glass, default rim      +55.0       -42.1   (dark / light theme)
+ *   glass, this rim         +80.2       -54.7
+ *   opaque card             +76.5       -57.8
+ *
+ * Specificity is deliberately one class, not two. :where() zeroes the
+ * surface half, so this outranks the surface and edge defaults it has to
+ * replace -- it comes after both -- but an author's own class, loaded
+ * after the library, still wins. Written as two attribute selectors it
+ * would have beaten .panel { --cast-edge-lit: ... } too, and every value
+ * here would have needed !important to tune.
  */
-[data-cast~="surface"][data-cast~="glass"] {
+:where([data-cast~="surface"])[data-cast~="glass"] {
   isolation: auto;
   --cast-surface-z: 2;
   --cast-grain-z: 9999;
+
+  --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
+  --cast-edge-shade: rgb(0 0 0 / 0.45);
 }
 
 /*

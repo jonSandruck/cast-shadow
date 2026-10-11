@@ -517,21 +517,42 @@ a tile over a mid-grey page:
 | `surface` | 1.01 → 3.05 | +3.7 → +13.9 |
 | `surface glass` | 1.00 → 1.36 | +3.7 → +5.2 |
 
-`glass` is three settings, and you can write them yourself instead:
+`glass` is five settings, and you can write them yourself instead:
 
 ```css
 .panel {
   isolation: auto;       /* let the layers see what's behind */
   --cast-surface-z: 2;   /* sheen above the background */
   --cast-grain-z: 9999;  /* grain above the background */
+
+  /* a stronger rim, to match an opaque card's */
+  --cast-edge-lit: color-mix(in srgb, var(--cast-light-color) 50%, transparent);
+  --cast-edge-shade: rgb(0 0 0 / 0.45);
 }
 ```
 
 Dropping the isolation alone is not enough. Without it, layers at `-1`
 paint *behind* the element's own background — on an opaque tile the sheen
 measured 0.00. So both layers come up as well. With all three, the sheen
-matches an ordinary surface at every alpha, and an opaque `glass` tile
-looks the same as one without it.
+matches an ordinary surface at every alpha, and so does the grain on an
+opaque `glass` tile.
+
+**The rim is stronger on purpose.** A see-through face doesn't stand out
+from what's behind it, so the rim does all the outlining. Real glass is
+also brightest at its edges: light that enters the face gets trapped
+inside the pane and leaks out at the edge. The target is the same edge
+definition an opaque card gets. Over the demo's window photograph:
+
+| | lit side, dark theme | shade side, light theme |
+| --- | --- | --- |
+| glass, default rim | +55.0 | −42.1 |
+| glass, stronger rim | +80.2 | −54.7 |
+| opaque card | +76.5 | −57.8 |
+
+**Your own CSS wins.** `glass` is written with the specificity of one
+class, so a class of yours loaded after the library overrides any of the
+five. An earlier version used two attribute selectors and beat
+`.panel { --cast-surface-z: 1 }`; that's fixed.
 
 **Costs.** Both layers now sit over the content, so they tint text, the
 same trade as `--cast-surface-z: 2` on a photo card. It does nothing
