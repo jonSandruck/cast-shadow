@@ -247,6 +247,18 @@
     background: var(--surface); border: 1px solid var(--line);
     border-radius: 10px; padding: 9px 18px; cursor: pointer;
   }
+  /* The primary call to action swaps ink and surface. Tune by surface, not
+     by theme: it is a dark face in light mode and a pale one in dark mode,
+     so it takes the other theme's sheen and blend. Each rule matches the
+     specificity of the theme rule it answers and comes after it. */
+  .btn.primary {
+    background: var(--ink); color: var(--surface);
+    --cast-sheen: 0.07; --cast-grain-blend: overlay;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn.primary { --cast-sheen: 0.14; --cast-grain-blend: soft-light; }
+  }
+  :root[data-theme="dark"] .btn.primary { --cast-sheen: 0.14; --cast-grain-blend: soft-light; }
 
   /*
    * A border and a lit rim are two ways to draw the same edge, and running
@@ -361,7 +373,7 @@
       <p class="lede">One movable light drives the shadows, surface sheen, edge
         highlights and room light.</p>
       <div class="hero-actions">
-        <a class="btn" href="#install" data-cast="surface edge" style="--cast-elevation: 16">Get started</a>
+        <a class="btn primary" href="#install" data-cast="surface edge" style="--cast-elevation: 16">Get started</a>
         <a class="btn" href="#light" data-cast="edge" style="--cast-elevation: 12">See what it does</a>
       </div>
       <p class="hero-hint">Move your pointer and the light follows. To place it
