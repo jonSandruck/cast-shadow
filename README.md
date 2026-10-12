@@ -397,6 +397,10 @@ lights the object's own face:
 You get a face modelled from both ends — highlight toward the light,
 shading away from it — plus fine grain.
 
+Surface mode sets `position: relative` so its layers have something to
+anchor to. A modal `<dialog>` or an open popover keeps `position: fixed`
+instead, so it stays pinned to the viewport.
+
 **Tune by surface, not by theme.** Compositing leaves almost no headroom at
 the top of a light surface: white at alpha `0.14` over `#fcfbf9` moves the
 red channel from 252 to 252.4, under half a level. Black at the same alpha
@@ -723,6 +727,10 @@ shadows.destroy();              // remove listeners and properties
 Calling `castShadow()` replaces the instance that started on import, so the
 two never fight over the same element.
 
+On a server, importing the module does nothing, so a server-rendered app
+(Next.js and the like) can import it at the top of a file and call
+`castShadow()` in an effect.
+
 `setLight()` writes `--cast-light-x` and `--cast-light-y` on the root as
 well, so room mode's pool moves with the shadows. A bare number means px.
 
@@ -774,8 +782,9 @@ custom properties and fall back to the static shadow.
 `index.html` opens with a hero for the library. Then it shows the light
 (position, height, size, colour, room light) and the objects it lights
 (elevation, shape, surface, edge, photos, glass), each with a live example,
-its code, and a closed "How it works" panel. It ends with Get started and
-the full reference. Serve the folder and open it, and the light
+its code, and a closed "How it works" panel. It ends with Get started,
+recipes to copy (pointer follow, a fixed lamp, a card, buttons, a photo
+card, dark mode, a dialog, React) and the full reference. Serve the folder and open it, and the light
 follows your pointer. Tune has a switch to place it with a click instead.
 
 The library is still the two files at the root. `demo/img/` holds

@@ -480,8 +480,13 @@ function startAutomatic() {
   automatic = createInstance();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startAutomatic, { once: true });
-} else {
-  startAutomatic();
+// On a server there is no document, and nothing to light. Importing the
+// module there does nothing, so a server-rendered app can import it at the
+// top of a file and start it in the browser.
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAutomatic, { once: true });
+  } else {
+    startAutomatic();
+  }
 }

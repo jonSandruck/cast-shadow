@@ -539,6 +539,26 @@
   --cast-wash-alpha: calc(var(--cast-sheen) * var(--cast-overhead) * (1 - var(--cast-t)));
 }
 
+/*
+ * A modal dialog or an open popover is pinned to the viewport by the
+ * browser's own stylesheet, and any author rule outranks that one --
+ * including the position: relative above. Measured in Chrome, a modal
+ * dialog in surface mode computed to absolute and scrolled away with the
+ * page. Give it back. Fixed is positioned too, so the layers still anchor
+ * to the element. Room mode sets the same property, so it gets the same
+ * fix. Popovers get their own rule, so a browser that doesn't know
+ * :popover-open drops only that one.
+ */
+[data-cast~="surface"]:modal,
+[data-cast~="room"]:modal {
+  position: fixed;
+}
+
+[data-cast~="surface"]:popover-open,
+[data-cast~="room"]:popover-open {
+  position: fixed;
+}
+
 [data-cast~="surface"]::before {
   content: "";
   position: absolute;

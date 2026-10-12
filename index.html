@@ -276,6 +276,25 @@
    */
   [data-cast~="edge"] { border: 0; }
 
+  /* ---- Recipes ------------------------------------------------------- */
+  @property --cast-elevation { syntax: "<number>"; inherits: true; initial-value: 20; }
+  .recipe-card {
+    --cast-elevation: 20; background: var(--surface); border-radius: 14px;
+    padding: 20px; max-width: 300px;
+  }
+  .recipe-card h4 { margin: 0 0 6px; font-size: 16px; font-weight: 650; }
+  .recipe-card p { margin: 0; font-size: 14px; color: var(--muted); }
+  .recipe-btn { --cast-elevation: 8; transition: --cast-elevation 150ms ease-out; }
+  .recipe-btn:hover { --cast-elevation: 14; }
+  .recipe-btn:active { --cast-elevation: 2; }
+  .recipe-dialog {
+    --cast-elevation: 96; border: 0; border-radius: 16px; padding: 22px 24px;
+    background: var(--surface); color: var(--ink); max-width: min(360px, calc(100vw - 32px));
+  }
+  .recipe-dialog h4 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+  .recipe-dialog p { margin: 0 0 18px; color: var(--muted); }
+  .recipe-dialog::backdrop { background: rgb(0 0 0 / 0.25); }
+
   /* ---- The light ----------------------------------------------------- */
   .lamp {
     position: fixed; left: var(--cast-light-x); top: var(--cast-light-y);
@@ -356,6 +375,7 @@
     <a href="#light">Light</a>
     <a href="#objects">Objects</a>
     <a href="#install">Get started</a>
+    <a href="#recipes">Recipes</a>
     <a href="#reference">Reference</a>
   </nav>
   <button class="theme-toggle" type="button" id="theme-toggle">Dark</button>
@@ -997,6 +1017,205 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
     </div>
   </section>
 
+  <!-- ================= RECIPES ================= -->
+  <section class="section" id="recipes">
+    <p class="kicker">Use it</p>
+    <h2>Recipes</h2>
+    <p>Patterns to copy whole. Each one assumes the two files from
+      <a href="#install">Get started</a> are already on the page.</p>
+
+    <h3 id="recipe-follow">Follow the pointer</h3>
+    <p>
+      The light tracks a mouse or pen. It holds still on touch screens,
+      under reduced motion, and over anything marked
+      <code>data-cast-hold</code>, so a menu can be reached without dragging
+      the light along.
+    </p>
+    <pre><code>&lt;script type="module"&gt;
+  import { castShadow } from './cast-shadow.js';
+  castShadow({ <b>follow: 'pointer'</b> });
+&lt;/script&gt;
+
+&lt;nav <b>data-cast-hold</b>&gt;…&lt;/nav&gt;</code></pre>
+    <p style="margin-top:18px">On a touch screen there is nothing to follow.
+      To let a tap move the light instead:</p>
+    <pre><code>const shadows = castShadow({ follow: 'pointer' });
+
+document.addEventListener('click', (event) =&gt; {
+  shadows.<b>setLight</b>(
+    `${(event.clientX / innerWidth) * 100}%`,
+    `${(event.clientY / innerHeight) * 100}%`,
+  );
+});</code></pre>
+
+    <h3 id="recipe-lamp">A fixed lamp</h3>
+    <p>
+      No script needed. Put the light where a lamp would hang and leave it
+      there. This one sits just above the top right corner, high enough
+      for short, soft shadows.
+    </p>
+    <pre><code>:root {
+  <b>--cast-light-x</b>: 85%;
+  <b>--cast-light-y</b>: -10%;  /* above the top edge */
+  <b>--cast-light-z</b>: 900;
+}</code></pre>
+    <p style="margin-top:18px">To hang it on something on screen, like a
+      logo in a fixed header, measure that element and place the light on
+      it:</p>
+    <pre><code>const shadows = castShadow();
+const logo = document.querySelector('.logo');
+
+function hangLight() {
+  const box = logo.getBoundingClientRect();
+  shadows.<b>setLight</b>(box.left + box.width / 2, box.top + box.height / 2);
+}
+hangLight();
+addEventListener('resize', hangLight);</code></pre>
+
+    <h3 id="recipe-card">A card</h3>
+    <p>
+      Surface and edge together, at a card's height. The card needs a solid
+      background for the sheen to land on, and no border: the lit rim is
+      the edge.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <article class="recipe-card" data-cast="surface edge">
+          <h4>Studio notes</h4>
+          <p>Lit from wherever the light is. Move it and watch the face and
+            rim turn.</p>
+        </article>
+      </div>
+      <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>&gt;…&lt;/article&gt;
+
+.card {
+  <b>--cast-elevation</b>: 20;
+  background: #fff;
+  border: 0;
+  border-radius: 14px;
+  padding: 20px;
+}</code></pre>
+    </div>
+
+    <h3 id="recipe-buttons">Buttons</h3>
+    <p>
+      A button rises a little under the pointer and drops close to the page
+      when pressed. Elevation isn't registered as a number by default, so
+      register it once to let it animate.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <button class="btn recipe-btn" type="button" data-cast="edge">Hover, then press</button>
+      </div>
+      <pre><code>@property <b>--cast-elevation</b> {
+  syntax: "&lt;number&gt;";
+  inherits: true;
+  initial-value: 20;
+}
+
+.button {
+  <b>--cast-elevation</b>: 8;
+  transition: <b>--cast-elevation</b> 150ms ease-out;
+}
+.button:hover  { <b>--cast-elevation</b>: 14; }
+.button:active { <b>--cast-elevation</b>: 2; }</code></pre>
+    </div>
+
+    <h3 id="recipe-photo">A photo card</h3>
+    <p>
+      A full-bleed image covers the sheen and the rim. Lift them over it
+      with <code>--cast-surface-z</code>. Keep the text below the photo:
+      the lifted layer tints whatever it crosses, and muted text can drop
+      below AA contrast. See <a href="#photos">Photos and media</a> for the
+      measurements.
+    </p>
+    <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>
+         style="<b>--cast-surface-z</b>: 2"&gt;
+  &lt;img src="…" alt="…"&gt;
+  &lt;div class="body"&gt;…&lt;/div&gt;
+&lt;/article&gt;</code></pre>
+
+    <h3 id="recipe-dark">Dark mode</h3>
+    <p>
+      On a dark page a shadow needs to be darker and stronger to read at
+      all. Sheen goes the other way: a dark face shows a highlight easily,
+      so it needs less. Glass keeps its settings, because what's behind it
+      doesn't change with the theme.
+    </p>
+    <pre><code>@media (prefers-color-scheme: dark) {
+  [data-cast] {
+    <b>--cast-color</b>: 0 0 0;
+    <b>--cast-alpha-near</b>: 0.62;
+    <b>--cast-alpha-far</b>: 0.26;
+  }
+  [data-cast]:not([data-cast~="glass"]) {
+    <b>--cast-sheen</b>: 0.07;
+    <b>--cast-grain-blend</b>: overlay;
+  }
+}</code></pre>
+    <p style="margin-top:18px">If your site has its own theme switch, use
+      the same rules under its selector, such as
+      <code>[data-theme="dark"]</code>, instead of the media query. Tune by
+      surface, not theme: a dark button on a light page wants the dark
+      settings.</p>
+
+    <h3 id="recipe-dialog">A dialog</h3>
+    <p>
+      Dialogs sit highest, so their shadows reach furthest. The script
+      handles fixed and top-layer elements: the shadow stays put while the
+      page scrolls behind.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <button class="btn" type="button" data-cast="edge" style="--cast-elevation: 12" id="recipe-open">Open the dialog</button>
+      </div>
+      <pre><code>&lt;dialog class="sheet" <b>data-cast="surface edge"</b>&gt;…&lt;/dialog&gt;
+
+.sheet {
+  <b>--cast-elevation</b>: 96;
+  border: 0;
+  border-radius: 16px;
+}
+.sheet::backdrop {
+  background: rgb(0 0 0 / 0.25);
+}</code></pre>
+    </div>
+    <dialog class="recipe-dialog" id="recipe-sheet" data-cast="surface edge">
+      <h4>Floating at 96</h4>
+      <p>Long, soft shadow, same light as everything else.</p>
+      <form method="dialog"><button class="btn" data-cast="edge" style="--cast-elevation: 8">Close</button></form>
+    </dialog>
+
+    <h3 id="recipe-react">React</h3>
+    <p>
+      Copy the two files into your project and start the script in an
+      effect. Destroying it on unmount removes its listeners. Elements
+      React adds later are picked up on their own.
+    </p>
+    <pre><code>import { useEffect } from 'react';
+import { castShadow } from './cast-shadow.js';
+import './cast-shadow.css';
+
+export default function App() {
+  useEffect(() =&gt; {
+    const shadows = <b>castShadow</b>({ follow: 'pointer' });
+    return () =&gt; shadows.<b>destroy</b>();
+  }, []);
+
+  return (
+    &lt;article className="card" <b>data-cast="surface edge"</b>
+             style={{ <b>'--cast-elevation'</b>: 20 }}&gt;
+      …
+    &lt;/article&gt;
+  );
+}</code></pre>
+    <div class="note">
+      <strong>Server rendering.</strong> The module does nothing when it is
+      imported on a server, so Next.js and similar can import it at the top
+      of a file. It starts in the browser, inside the effect.
+    </div>
+  </section>
+
   <!-- ================= REFERENCE ================= -->
   <section class="section" id="reference">
     <p class="kicker">Use it</p>
@@ -1166,6 +1385,17 @@ shadows.destroy();               // remove listeners and properties</code></pre>
         <li><a href="#mode-glass">Glass</a></li>
       </ul>
       <a class="subnav-top" href="#install">Get started</a>
+      <a class="subnav-top" href="#recipes">Recipes</a>
+      <ul>
+        <li><a href="#recipe-follow">Follow the pointer</a></li>
+        <li><a href="#recipe-lamp">A fixed lamp</a></li>
+        <li><a href="#recipe-card">A card</a></li>
+        <li><a href="#recipe-buttons">Buttons</a></li>
+        <li><a href="#recipe-photo">A photo card</a></li>
+        <li><a href="#recipe-dark">Dark mode</a></li>
+        <li><a href="#recipe-dialog">A dialog</a></li>
+        <li><a href="#recipe-react">React</a></li>
+      </ul>
       <a class="subnav-top" href="#reference">Reference</a>
       <ul>
         <li><a href="#ref-light">The light</a></li>
@@ -1307,6 +1537,10 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       `${(event.clientY / window.innerHeight) * 100}%`,
     );
   });
+
+  // ---- Recipes: the dialog example -------------------------------------
+  const recipeDialog = document.getElementById('recipe-sheet');
+  document.getElementById('recipe-open').addEventListener('click', () => recipeDialog.showModal());
 
   // ---- Lamp dot --------------------------------------------------------
   //
