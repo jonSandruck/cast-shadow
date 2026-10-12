@@ -645,7 +645,10 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
           <figcaption><code>shape</code></figcaption>
         </figure>
       </div>
-      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;</code></pre>
+      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;
+
+/* this example: a smaller light, for a crisper outline */
+.stage { <b>--cast-light-size</b>: 100; }</code></pre>
     </div>
     <details class="how">
       <summary>How it works</summary>
