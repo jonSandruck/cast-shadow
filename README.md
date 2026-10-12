@@ -819,7 +819,6 @@ All but the window came from `scikit-image`'s bundled sample data:
 | `portrait.jpg` | NASA — astronaut Eileen Collins, public domain |
 | `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
 | `coffee.jpg`, `cat.jpg` | scikit-image sample data |
-| `avatar.jpg` | Rocket launch, scikit-image sample data |
 | `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
 
 The lightbulb in the hero is the [Font Awesome Free](https://fontawesome.com)

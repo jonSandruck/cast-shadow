@@ -234,13 +234,6 @@
   .article .meta { margin: 0 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .article p { margin: 0; font-size: 14px; color: var(--muted); }
 
-  .profile {
-    display: flex; gap: 16px; align-items: center; padding: 18px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-  }
-  .profile img { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; flex: none; }
-  .profile h4 { margin: 0 0 2px; font-size: 15px; font-weight: 650; }
-  .profile p { margin: 0; font-size: 13px; color: var(--muted); }
 
   .btn {
     font: inherit; font-size: 14px; font-weight: 550; color: var(--ink);
@@ -590,23 +583,6 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
 .dialog { <b>--cast-elevation</b>: 80; }</code></pre>
     </div>
 
-    <p>
-      Avatars, buttons and inline chips want low elevations. A button that
-      floats 40px off the page reads as a mistake.
-    </p>
-
-    <div class="stage" style="gap:22px">
-      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
-        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
-        <div>
-          <h4>Ada Bell</h4>
-          <p>Lighting, stage &amp; screen</p>
-        </div>
-      </div>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
-      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
-    </div>
     <details class="how">
       <summary>How it works</summary>
     <p>
