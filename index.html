@@ -562,6 +562,18 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
       sense: <code>data-cast="surface edge"</code> applies both.
     </p>
 
+    <h3 id="mode-default">Shadow</h3>
+    <p>Nothing but <code>data-cast</code>. The shadow follows the border box
+      and respects <code>border-radius</code>.</p>
+    <div class="demo split">
+      <div class="stage">
+        <div class="chip" data-cast></div>
+        <div class="chip pill" data-cast></div>
+        <div class="chip block" data-cast></div>
+      </div>
+      <pre><code>&lt;div class="chip" <b>data-cast</b>&gt;&lt;/div&gt;</code></pre>
+    </div>
+
     <h3 id="elevation">Elevation</h3>
     <p>
       Give anything a height above the page. Higher objects throw longer,
@@ -576,17 +588,6 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
       </div>
       <pre><code>.card   { <b>--cast-elevation</b>: 20; }
 .dialog { <b>--cast-elevation</b>: 80; }</code></pre>
-    </div>
-
-    <p>Nothing but <code>data-cast</code>. The shadow follows the border box
-      and respects <code>border-radius</code>.</p>
-    <div class="demo split">
-      <div class="stage">
-        <div class="chip" data-cast></div>
-        <div class="chip pill" data-cast></div>
-        <div class="chip block" data-cast></div>
-      </div>
-      <pre><code>&lt;div class="chip" <b>data-cast</b>&gt;&lt;/div&gt;</code></pre>
     </div>
 
     <p>
@@ -1390,6 +1391,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       </ul>
       <a class="subnav-top" href="#objects">Objects</a>
       <ul>
+        <li><a href="#mode-default">Shadow</a></li>
         <li><a href="#elevation">Elevation</a></li>
         <li><a href="#mode-shape">Shape</a></li>
         <li><a href="#mode-surface">Surface</a></li>
