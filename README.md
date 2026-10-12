@@ -12,7 +12,9 @@ No dependencies. No build step. Two files.
 
 ## Install
 
-Copy `cast-shadow.css` and `cast-shadow.js` into your project, then:
+Download [cast-shadow.zip](https://github.com/jonSandruck/cast-shadow/releases/latest/download/cast-shadow.zip) and unzip it into your project. It
+holds the two files, `cast-shadow.css` and `cast-shadow.js`, from the latest
+release. Then:
 
 ```html
 <link rel="stylesheet" href="cast-shadow.css">
@@ -794,6 +796,14 @@ ordinary, tasteful shadow. The script only makes it directional.
 Needs `@property`, `atan2()`, `IntersectionObserver` and `ResizeObserver` —
 Chrome and Edge 111+, Safari 16.4+, Firefox 128+. Older browsers ignore the
 custom properties and fall back to the static shadow.
+
+## Releasing
+
+Publish a release on GitHub with a version tag, such as `v1.1`. The
+`Release zip` workflow zips the two library files and attaches
+`cast-shadow.zip` to it, and the download link always points at the newest
+release. To rebuild the zip for an existing tag, run the workflow by hand
+and give it the tag.
 
 ## Demo
 
