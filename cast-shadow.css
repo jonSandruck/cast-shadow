@@ -421,6 +421,17 @@
   --cast-shade: 0.09;
 
   /*
+   * How much brighter a face gets as it rises toward the light. A lamp's
+   * light falls off with the square of distance, so a dialog floating
+   * near it catches more than a card resting on the page. 0 turns it off.
+   *
+   * Like the sheen it adds the light's colour, so on a near-white face it
+   * has nowhere to go and does almost nothing. It shows on dark faces,
+   * which is where raised surfaces have always been drawn lighter.
+   */
+  --cast-lift: 0.2;
+
+  /*
    * How far each term carries in from its own edge, which is the width of
    * the terminator: the band where lit turns to unlit.
    *
@@ -536,7 +547,37 @@
      and falloff as the sheen, so as the gradient fades overhead an even
      wash of the light's colour takes its place. No shade counterpart:
      nothing on a face is turned away from a light directly above it. */
-  --cast-wash-alpha: calc(var(--cast-sheen) * var(--cast-overhead) * (1 - var(--cast-t)));
+  --cast-wash-alpha: calc(
+    var(--cast-sheen) * var(--cast-overhead) * (1 - var(--cast-t))
+    + var(--cast-lift) * var(--cast-nearness)
+  );
+
+  /*
+   * How much more light reaches the face than reaches the page beneath
+   * it, by the inverse square law. The light is H above the page and d
+   * off to the side; the face is h closer:
+   *
+   *   (d² + H²) / (d² + (H − h)²) − 1
+   *
+   * With the light at 600 and 300px to one side:
+   *
+   *   elevation   4 -> 0.01     resting on the page
+   *   elevation  20 -> 0.06     a card
+   *   elevation  96 -> 0.31     a dialog
+   *   elevation 200 -> 0.80
+   *
+   * Capped at 1 so a face that rises right up to the lamp stays finite.
+   * Distance is already inside it, so it takes no (1 - t).
+   */
+  --cast-gap: max(var(--cast-light-z) - var(--cast-elevation), 1);
+  --cast-nearness: min(
+    calc(
+      (var(--cast-d) * var(--cast-d) + var(--cast-light-z) * var(--cast-light-z))
+      / (var(--cast-d) * var(--cast-d) + var(--cast-gap) * var(--cast-gap))
+      - 1
+    ),
+    1
+  );
 }
 
 /*
@@ -569,7 +610,7 @@
 
   /* Painted under the gradient, as background colour does. */
   background-color: color-mix(
-    in srgb, var(--cast-light-color) calc(var(--cast-wash-alpha) * 100%), transparent
+    in srgb, var(--cast-light-color) calc(min(var(--cast-wash-alpha), 1) * 100%), transparent
   );
 
   /* Each end fades to a transparent stop of its OWN colour. Fading white

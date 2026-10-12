@@ -413,12 +413,30 @@ without needing to know which theme is active.
 | --- | --- | --- |
 | `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
+| `--cast-lift` | `0.2` | How much brighter a face gets as it rises toward the light |
 | `--cast-sheen-reach` | from light size | Terminator width; `45%` at the default source |
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.2` | Grain opacity |
 | `--cast-grain-size` | `280` | Grain tile size, in px |
 | `--cast-grain-z` | `-1` | Which layer the grain sits on |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
+
+### Higher faces catch more light
+
+A lamp's light falls off with the square of distance, so a face that floats
+nearer to it is brighter. Surface mode adds the light's colour by how much
+more light reaches the face than the page beneath it:
+
+```
+(d² + H²) / (d² + (H − h)²) − 1
+```
+
+With the light at 600 and 300px to one side, that is `0.06` for a card at
+20, `0.31` for a dialog at 96 and `0.80` at 200, capped at 1.
+`--cast-lift` scales it. Measured on a dark tile in the same spot, face
+L* rose by `1.0` at 20, `5.2` at 96 and `10.5` at 200. A near-white face
+has no room to brighten, so light themes barely change. Set
+`--cast-lift: 0` to turn it off.
 
 ### The light's height and size reach the face too
 

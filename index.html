@@ -710,6 +710,16 @@ castShadow({ <b>follow: 'pointer'</b> });</code></pre>
     <details class="how">
       <summary>How it works</summary>
     <div class="note">
+      <strong>Higher faces catch more light.</strong> A lamp's light falls
+      off with the square of distance, so a face floating nearer to it is
+      brighter. The face gains the light's colour by
+      <code>(d² + H²) / (d² + (H &minus; h)²) &minus; 1</code>, scaled by
+      <code>--cast-lift</code>. On a dark tile with the light at 600 and
+      300px off, L* rose <code>1.0</code> at elevation 20,
+      <code>5.2</code> at 96 and <code>10.5</code> at 200. A near-white
+      face has no room to brighten, so light themes barely change.
+    </div>
+    <div class="note">
       <strong>The light's height and size reach the face.</strong> Sheen
       strength follows how oblique the light is —
       <code>d / (H &minus; h)</code>, zero straight overhead and clamped
@@ -1161,9 +1171,11 @@ addEventListener('resize', hangLight);</code></pre>
 
     <h3 id="recipe-dialog">A dialog</h3>
     <p>
-      Dialogs sit highest, so their shadows reach furthest. The script
-      handles fixed and top-layer elements: the shadow stays put while the
-      page scrolls behind.
+      Dialogs sit highest, so their shadows reach furthest, and in surface
+      mode their faces catch more light: a lamp is brighter up close. On a
+      dark theme that lifts a dialog above the page with no extra colour.
+      The script handles fixed and top-layer elements, so the shadow stays
+      put while the page scrolls behind.
     </p>
     <div class="demo">
       <div class="stage">
@@ -1251,6 +1263,7 @@ export default function App() {
       <tbody>
         <tr><td><code>--cast-sheen</code></td><td><code>0.14</code></td><td>Highlight strength on the lit edge</td></tr>
         <tr><td><code>--cast-shade</code></td><td><code>0.09</code></td><td>Shading strength on the unlit edge</td></tr>
+        <tr><td><code>--cast-lift</code></td><td><code>0.2</code></td><td>How much brighter a face gets as it rises toward the light</td></tr>
         <tr><td><code>--cast-sheen-reach</code></td><td>from light size</td><td>Terminator width; <code>45%</code> at the default source</td></tr>
         <tr><td><code>--cast-surface-z</code></td><td><code>-1</code></td><td>Layer the modelling sits on</td></tr>
       </tbody>
