@@ -1,4 +1,4 @@
-# Builds cast-shadow.zip (just the two library files) and attaches it to a
+# Builds cast-shadow.zip (the two library files and the licence) and attaches it to a
 # release. The demo page and README link to
 #   https://github.com/jonSandruck/cast-shadow/releases/latest/download/cast-shadow.zip
 # which always resolves to the newest release, so publishing a release is
@@ -28,7 +28,7 @@ jobs:
           ref: ${{ env.TAG }}
 
       - name: Build cast-shadow.zip
-        run: zip -j cast-shadow.zip cast-shadow.js cast-shadow.css
+        run: zip -j cast-shadow.zip cast-shadow.js cast-shadow.css LICENSE
 
       - name: Attach it to the release
         env:

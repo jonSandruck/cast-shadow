@@ -14,7 +14,7 @@ No dependencies. No build step. Two files.
 
 Download [cast-shadow.zip](https://github.com/jonSandruck/cast-shadow/releases/latest/download/cast-shadow.zip) and unzip it into your project. It
 holds the two files, `cast-shadow.css` and `cast-shadow.js`, from the latest
-release. Then:
+release, plus the licence. Then:
 
 ```html
 <link rel="stylesheet" href="cast-shadow.css">
@@ -800,7 +800,7 @@ custom properties and fall back to the static shadow.
 ## Releasing
 
 Publish a release on GitHub with a version tag, such as `v1.1`. The
-`Release zip` workflow zips the two library files and attaches
+`Release zip` workflow zips the two library files and the licence, and attaches
 `cast-shadow.zip` to it, and the download link always points at the newest
 release. To rebuild the zip for an existing tag, run the workflow by hand
 and give it the tag.
@@ -842,3 +842,8 @@ License allows free use without attribution, though the credit above is
 good manners. The scikit-image samples are distributed for use with that
 project and I have not verified their terms for other uses. Swapping in your own photos is a one-line change per
 card.
+
+## License
+
+[MIT](LICENSE). The demo's photos and the Font Awesome icon keep their own
+licences, listed under the demo's image credits above.
