@@ -16,6 +16,7 @@
     --code-bg: #e7e3da;
     --code-ink: #2c313c;
     --lamp: #e8b53a;
+    --link: #1f56c4;
     --lamp-glow: 255 214 110;
     --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -26,7 +27,7 @@
     :root:not([data-theme="light"]) {
       --ground: #121419; --surface: #1c1f26; --ink: #e6e4df; --muted: #8b909b;
       --line: #2a2e37; --code-bg: #20242c; --code-ink: #cdd3de;
-      --lamp: #f0c24e; --lamp-glow: 240 194 78;
+      --lamp: #f0c24e; --lamp-glow: 240 194 78; --link: #8ab4ff;
     }
     :root:not([data-theme="light"]) [data-cast] {
       --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
@@ -39,7 +40,7 @@
   :root[data-theme="dark"] {
     --ground: #121419; --surface: #1c1f26; --ink: #e6e4df; --muted: #8b909b;
     --line: #2a2e37; --code-bg: #20242c; --code-ink: #cdd3de;
-    --lamp: #f0c24e; --lamp-glow: 240 194 78;
+    --lamp: #f0c24e; --lamp-glow: 240 194 78; --link: #8ab4ff;
   }
   :root[data-theme="dark"] [data-cast] {
     --cast-color: 0 0 0; --cast-alpha-near: 0.62; --cast-alpha-far: 0.26;
@@ -53,6 +54,9 @@
   }
 
   * { box-sizing: border-box; }
+
+  /* Contrast on the page ground: 5.6:1 light, 8.8:1 dark. */
+  a { color: var(--link); }
 
   body {
     margin: 0; background: var(--ground); color: var(--ink);
@@ -234,13 +238,6 @@
   .article .meta { margin: 0 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .article p { margin: 0; font-size: 14px; color: var(--muted); }
 
-  .profile {
-    display: flex; gap: 16px; align-items: center; padding: 18px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-  }
-  .profile img { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; flex: none; }
-  .profile h4 { margin: 0 0 2px; font-size: 15px; font-weight: 650; }
-  .profile p { margin: 0; font-size: 13px; color: var(--muted); }
 
   .btn {
     font: inherit; font-size: 14px; font-weight: 550; color: var(--ink);
@@ -275,6 +272,32 @@
    * Same specificity as .article and .btn, so this has to come after them.
    */
   [data-cast~="edge"] { border: 0; }
+
+  /* ---- Get started steps --------------------------------------------- */
+  .steps { margin: 22px 0 0; padding-left: 1.4em; }
+  .steps li { margin-bottom: 22px; padding-left: 4px; }
+  .steps li::marker { font-weight: 650; color: var(--muted); }
+  .steps p { margin: 0 0 12px; }
+  .steps .btn { display: inline-block; text-decoration: none; font-size: 15px; padding: 10px 18px; }
+
+  /* ---- Recipes ------------------------------------------------------- */
+  @property --cast-elevation { syntax: "<number>"; inherits: true; initial-value: 20; }
+  .recipe-card {
+    --cast-elevation: 20; background: var(--surface); border-radius: 14px;
+    padding: 20px; max-width: 300px;
+  }
+  .recipe-card h4 { margin: 0 0 6px; font-size: 16px; font-weight: 650; }
+  .recipe-card p { margin: 0; font-size: 14px; color: var(--muted); }
+  .recipe-btn { --cast-elevation: 8; transition: --cast-elevation 150ms ease-out; }
+  .recipe-btn:hover { --cast-elevation: 14; }
+  .recipe-btn:active { --cast-elevation: 2; }
+  .recipe-dialog {
+    --cast-elevation: 96; border: 0; border-radius: 16px; padding: 22px 24px;
+    background: var(--surface); color: var(--ink); max-width: min(360px, calc(100vw - 32px));
+  }
+  .recipe-dialog h4 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+  .recipe-dialog p { margin: 0 0 18px; color: var(--muted); }
+  .recipe-dialog::backdrop { background: rgb(0 0 0 / 0.25); }
 
   /* ---- The light ----------------------------------------------------- */
   .lamp {
@@ -356,6 +379,7 @@
     <a href="#light">Light</a>
     <a href="#objects">Objects</a>
     <a href="#install">Get started</a>
+    <a href="#recipes">Recipes</a>
     <a href="#reference">Reference</a>
   </nav>
   <button class="theme-toggle" type="button" id="theme-toggle">Dark</button>
@@ -401,8 +425,11 @@
     <p>
       <code>--cast-light-x</code> and <code>--cast-light-y</code> place the
       light in the viewport. On this page it follows your pointer, and every
-      shadow, sheen and rim turns to face it.
+      shadow, sheen and rim turns to face it. That takes one option:
     </p>
+    <pre><code>import { castShadow } from './cast-shadow.js';
+
+castShadow({ <b>follow: 'pointer'</b> });</code></pre>
 
     <h3 id="light-height">Height</h3>
     <p>
@@ -539,22 +566,7 @@
       sense: <code>data-cast="surface edge"</code> applies both.
     </p>
 
-    <h3 id="elevation">Elevation</h3>
-    <p>
-      Give anything a height above the page. Higher objects throw longer,
-      softer shadows, and both come from that one number.
-    </p>
-    <div class="demo split">
-      <div class="stage">
-        <div class="tile" data-cast style="--cast-elevation: 4">4</div>
-        <div class="tile" data-cast style="--cast-elevation: 20">20</div>
-        <div class="tile" data-cast style="--cast-elevation: 48">48</div>
-        <div class="tile" data-cast style="--cast-elevation: 96">96</div>
-      </div>
-      <pre><code>.card   { <b>--cast-elevation</b>: 20; }
-.dialog { <b>--cast-elevation</b>: 80; }</code></pre>
-    </div>
-
+    <h3 id="mode-default">Shadow</h3>
     <p>Nothing but <code>data-cast</code>. The shadow follows the border box
       and respects <code>border-radius</code>.</p>
     <div class="demo split">
@@ -566,23 +578,22 @@
       <pre><code>&lt;div class="chip" <b>data-cast</b>&gt;&lt;/div&gt;</code></pre>
     </div>
 
+    <h3 id="elevation">Elevation</h3>
     <p>
-      Avatars, buttons and inline chips want low elevations. A button that
-      floats 40px off the page reads as a mistake.
+      Give anything a height above the page. Higher objects throw longer,
+      softer shadows, and both come from that one number.
     </p>
-
-    <div class="stage" style="gap:22px">
-      <div class="profile" data-cast="surface edge" style="--cast-elevation: 14">
-        <img src="demo/img/avatar.jpg" alt="" width="62" height="62">
-        <div>
-          <h4>Ada Bell</h4>
-          <p>Lighting, stage &amp; screen</p>
-        </div>
+    <div class="demo split">
+      <div class="stage">
+        <div class="tile" data-cast="surface" style="--cast-elevation: 4">4</div>
+        <div class="tile" data-cast="surface" style="--cast-elevation: 20">20</div>
+        <div class="tile" data-cast="surface" style="--cast-elevation: 48">48</div>
+        <div class="tile" data-cast="surface" style="--cast-elevation: 96">96</div>
       </div>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 6">Pressed</button>
-      <button class="btn" data-cast="edge" style="--cast-elevation: 16">Raised</button>
-      <button class="btn" data-cast="surface edge" style="--cast-elevation: 34">Floating</button>
+      <pre><code>.card   { <b>--cast-elevation</b>: 20; }
+.dialog { <b>--cast-elevation</b>: 80; }</code></pre>
     </div>
+
     <details class="how">
       <summary>How it works</summary>
     <p>
@@ -631,7 +642,7 @@
       follows the alpha silhouette instead of the box.
     </p>
     <div class="demo split">
-      <div class="stage">
+      <div class="stage" style="--cast-light-size: 100">
         <figure>
           <svg class="mark" data-cast width="130" height="130" viewBox="0 0 100 100" role="img" aria-label="Star, box mode">
             <path class="face" d="M50 4 61 36 95 36 68 56 78 90 50 70 22 90 32 56 5 36 39 36Z"/>
@@ -645,7 +656,10 @@
           <figcaption><code>shape</code></figcaption>
         </figure>
       </div>
-      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;</code></pre>
+      <pre><code>&lt;svg <b>data-cast="shape"</b>&gt;…&lt;/svg&gt;
+
+/* this example: a smaller light, for a crisper outline */
+.stage { <b>--cast-light-size</b>: 100; }</code></pre>
     </div>
     <details class="how">
       <summary>How it works</summary>
@@ -686,6 +700,16 @@
     </div>
     <details class="how">
       <summary>How it works</summary>
+    <div class="note">
+      <strong>Higher faces catch more light.</strong> A lamp's light falls
+      off with the square of distance, so a face floating nearer to it is
+      brighter. The face gains the light's colour by
+      <code>(d² + H²) / (d² + (H &minus; h)²) &minus; 1</code>, scaled by
+      <code>--cast-lift</code>. On a dark tile with the light at 600 and
+      300px off, L* rose <code>1.0</code> at elevation 20,
+      <code>5.2</code> at 96 and <code>10.5</code> at 200. A near-white
+      face has no room to brighten, so light themes barely change.
+    </div>
     <div class="note">
       <strong>The light's height and size reach the face.</strong> Sheen
       strength follows how oblique the light is —
@@ -974,15 +998,26 @@
   <section class="section" id="install">
     <p class="kicker">Use it</p>
     <h2>Get started</h2>
-    <p>Two files, no dependencies, no build step.</p>
+    <p>Two files, no dependencies, no build step. Free to use under the
+      <a href="https://github.com/jonSandruck/cast-shadow/blob/main/LICENSE">MIT licence</a>.</p>
 
-    <div class="demo split">
-      <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
+    <ol class="steps">
+      <li>
+        <p>Download the files and unzip them into your site's folder.</p>
+        <a class="btn primary" href="https://github.com/jonSandruck/cast-shadow/releases/latest/download/cast-shadow.zip" data-cast="surface edge" style="--cast-elevation: 12">Download cast-shadow.zip</a>
+      </li>
+      <li>
+        <p>Add them to your page.</p>
+        <pre><code>&lt;link rel="stylesheet" href="cast-shadow.css"&gt;
 &lt;script type="module" src="cast-shadow.js"&gt;&lt;/script&gt;</code></pre>
-      <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
+      </li>
+      <li>
+        <p>Mark anything you want lit.</p>
+        <pre><code>&lt;article class="card" <b>data-cast</b>&gt;
   …
 &lt;/article&gt;</code></pre>
-    </div>
+      </li>
+    </ol>
 
     <p style="margin-top:20px">That is the whole setup. The script starts
       itself, picks up elements added later, and needs no configuration.</p>
@@ -991,6 +1026,207 @@
       <strong>ES modules do not load over <code>file://</code>.</strong>
       Opening the page by double-clicking it fails with a CORS error. Serve
       the folder instead — <code>python3 -m http.server</code> is enough.
+    </div>
+  </section>
+
+  <!-- ================= RECIPES ================= -->
+  <section class="section" id="recipes">
+    <p class="kicker">Use it</p>
+    <h2>Recipes</h2>
+    <p>Patterns to copy whole. Each one assumes the two files from
+      <a href="#install">Get started</a> are already on the page.</p>
+
+    <h3 id="recipe-follow">Follow the pointer</h3>
+    <p>
+      The light tracks a mouse or pen. It holds still on touch screens,
+      under reduced motion, and over anything marked
+      <code>data-cast-hold</code>, so a menu can be reached without dragging
+      the light along.
+    </p>
+    <pre><code>&lt;script type="module"&gt;
+  import { castShadow } from './cast-shadow.js';
+  castShadow({ <b>follow: 'pointer'</b> });
+&lt;/script&gt;
+
+&lt;nav <b>data-cast-hold</b>&gt;…&lt;/nav&gt;</code></pre>
+    <p style="margin-top:18px">On a touch screen there is nothing to follow.
+      To let a tap move the light instead:</p>
+    <pre><code>const shadows = castShadow({ follow: 'pointer' });
+
+document.addEventListener('click', (event) =&gt; {
+  shadows.<b>setLight</b>(
+    `${(event.clientX / innerWidth) * 100}%`,
+    `${(event.clientY / innerHeight) * 100}%`,
+  );
+});</code></pre>
+
+    <h3 id="recipe-lamp">A fixed lamp</h3>
+    <p>
+      No script needed. Put the light where a lamp would hang and leave it
+      there. This one sits just above the top right corner, high enough
+      for short, soft shadows.
+    </p>
+    <pre><code>:root {
+  <b>--cast-light-x</b>: 85%;
+  <b>--cast-light-y</b>: -10%;  /* above the top edge */
+  <b>--cast-light-z</b>: 900;
+}</code></pre>
+    <p style="margin-top:18px">To hang it on something on screen, like a
+      logo in a fixed header, measure that element and place the light on
+      it:</p>
+    <pre><code>const shadows = castShadow();
+const logo = document.querySelector('.logo');
+
+function hangLight() {
+  const box = logo.getBoundingClientRect();
+  shadows.<b>setLight</b>(box.left + box.width / 2, box.top + box.height / 2);
+}
+hangLight();
+addEventListener('resize', hangLight);</code></pre>
+
+    <h3 id="recipe-card">A card</h3>
+    <p>
+      Surface and edge together, at a card's height. The card needs a solid
+      background for the sheen to land on, and no border: the lit rim is
+      the edge.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <article class="recipe-card" data-cast="surface edge">
+          <h4>Studio notes</h4>
+          <p>Lit from wherever the light is. Move it and watch the face and
+            rim turn.</p>
+        </article>
+      </div>
+      <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>&gt;…&lt;/article&gt;
+
+.card {
+  <b>--cast-elevation</b>: 20;
+  background: #fff;
+  border: 0;
+  border-radius: 14px;
+  padding: 20px;
+}</code></pre>
+    </div>
+
+    <h3 id="recipe-buttons">Buttons</h3>
+    <p>
+      A button rises a little under the pointer and drops close to the page
+      when pressed. Elevation isn't registered as a number by default, so
+      register it once to let it animate.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <button class="btn recipe-btn" type="button" data-cast="edge">Hover, then press</button>
+      </div>
+      <pre><code>@property <b>--cast-elevation</b> {
+  syntax: "&lt;number&gt;";
+  inherits: true;
+  initial-value: 20;
+}
+
+.button {
+  <b>--cast-elevation</b>: 8;
+  transition: <b>--cast-elevation</b> 150ms ease-out;
+}
+.button:hover  { <b>--cast-elevation</b>: 14; }
+.button:active { <b>--cast-elevation</b>: 2; }</code></pre>
+    </div>
+
+    <h3 id="recipe-photo">A photo card</h3>
+    <p>
+      A full-bleed image covers the sheen and the rim. Lift them over it
+      with <code>--cast-surface-z</code>. Keep the text below the photo:
+      the lifted layer tints whatever it crosses, and muted text can drop
+      below AA contrast. See <a href="#photos">Photos and media</a> for the
+      measurements.
+    </p>
+    <pre><code>&lt;article class="card" <b>data-cast="surface edge"</b>
+         style="<b>--cast-surface-z</b>: 2"&gt;
+  &lt;img src="…" alt="…"&gt;
+  &lt;div class="body"&gt;…&lt;/div&gt;
+&lt;/article&gt;</code></pre>
+
+    <h3 id="recipe-dark">Dark mode</h3>
+    <p>
+      On a dark page a shadow needs to be darker and stronger to read at
+      all. Sheen goes the other way: a dark face shows a highlight easily,
+      so it needs less. Glass keeps its settings, because what's behind it
+      doesn't change with the theme.
+    </p>
+    <pre><code>@media (prefers-color-scheme: dark) {
+  [data-cast] {
+    <b>--cast-color</b>: 0 0 0;
+    <b>--cast-alpha-near</b>: 0.62;
+    <b>--cast-alpha-far</b>: 0.26;
+  }
+  [data-cast]:not([data-cast~="glass"]) {
+    <b>--cast-sheen</b>: 0.07;
+    <b>--cast-grain-blend</b>: overlay;
+  }
+}</code></pre>
+    <p style="margin-top:18px">If your site has its own theme switch, use
+      the same rules under its selector, such as
+      <code>[data-theme="dark"]</code>, instead of the media query. Tune by
+      surface, not theme: a dark button on a light page wants the dark
+      settings.</p>
+
+    <h3 id="recipe-dialog">A dialog</h3>
+    <p>
+      Dialogs sit highest, so their shadows reach furthest, and in surface
+      mode their faces catch more light: a lamp is brighter up close. On a
+      dark theme that lifts a dialog above the page with no extra colour.
+      The script handles fixed and top-layer elements, so the shadow stays
+      put while the page scrolls behind.
+    </p>
+    <div class="demo">
+      <div class="stage">
+        <button class="btn" type="button" data-cast="edge" style="--cast-elevation: 12" id="recipe-open">Open the dialog</button>
+      </div>
+      <pre><code>&lt;dialog class="sheet" <b>data-cast="surface edge"</b>&gt;…&lt;/dialog&gt;
+
+.sheet {
+  <b>--cast-elevation</b>: 96;
+  border: 0;
+  border-radius: 16px;
+}
+.sheet::backdrop {
+  background: rgb(0 0 0 / 0.25);
+}</code></pre>
+    </div>
+    <dialog class="recipe-dialog" id="recipe-sheet" data-cast="surface edge">
+      <h4>Floating at 96</h4>
+      <p>Long, soft shadow, same light as everything else.</p>
+      <form method="dialog"><button class="btn" data-cast="edge" style="--cast-elevation: 8">Close</button></form>
+    </dialog>
+
+    <h3 id="recipe-react">React</h3>
+    <p>
+      Copy the two files into your project and start the script in an
+      effect. Destroying it on unmount removes its listeners. Elements
+      React adds later are picked up on their own.
+    </p>
+    <pre><code>import { useEffect } from 'react';
+import { castShadow } from './cast-shadow.js';
+import './cast-shadow.css';
+
+export default function App() {
+  useEffect(() =&gt; {
+    const shadows = <b>castShadow</b>({ follow: 'pointer' });
+    return () =&gt; shadows.<b>destroy</b>();
+  }, []);
+
+  return (
+    &lt;article className="card" <b>data-cast="surface edge"</b>
+             style={{ <b>'--cast-elevation'</b>: 20 }}&gt;
+      …
+    &lt;/article&gt;
+  );
+}</code></pre>
+    <div class="note">
+      <strong>Server rendering.</strong> The module does nothing when it is
+      imported on a server, so Next.js and similar can import it at the top
+      of a file. It starts in the browser, inside the effect.
     </div>
   </section>
 
@@ -1029,6 +1265,7 @@
       <tbody>
         <tr><td><code>--cast-sheen</code></td><td><code>0.14</code></td><td>Highlight strength on the lit edge</td></tr>
         <tr><td><code>--cast-shade</code></td><td><code>0.09</code></td><td>Shading strength on the unlit edge</td></tr>
+        <tr><td><code>--cast-lift</code></td><td><code>0.2</code></td><td>How much brighter a face gets as it rises toward the light</td></tr>
         <tr><td><code>--cast-sheen-reach</code></td><td>from light size</td><td>Terminator width; <code>45%</code> at the default source</td></tr>
         <tr><td><code>--cast-surface-z</code></td><td><code>-1</code></td><td>Layer the modelling sits on</td></tr>
       </tbody>
@@ -1080,11 +1317,23 @@ const shadows = castShadow({
   root: document,                // subtree to watch
   light: { x: '20%', y: '10%' }, // overrides the CSS properties
   maxDistance: null,             // null = viewport diagonal
+  follow: false,                 // 'pointer' = the light follows the mouse
 });
 
 shadows.setLight('80%', '0%');   // move the light
+shadows.follow('pointer');       // start following; false stops
 shadows.refresh();               // re-measure after a layout change
 shadows.destroy();               // remove listeners and properties</code></pre>
+    <div class="note">
+      <strong>Following stays put on touch, under reduced motion, and over
+      <code>data-cast-hold</code>.</strong> A touch has no hover, so the
+      light would only chase a scrolling finger. Put
+      <code>data-cast-hold</code> on a menu or a panel of controls so the
+      pointer can reach it without dragging the light.
+      <code>setLight()</code> also writes <code>--cast-light-x</code> and
+      <code>--cast-light-y</code>, so room mode's pool moves with the
+      shadows.
+    </div>
     <div class="note">
       <code>x</code> and <code>y</code> are JavaScript's business but
       <code>z</code> is not. Height lives in CSS with elevation, because
@@ -1143,6 +1392,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
       </ul>
       <a class="subnav-top" href="#objects">Objects</a>
       <ul>
+        <li><a href="#mode-default">Shadow</a></li>
         <li><a href="#elevation">Elevation</a></li>
         <li><a href="#mode-shape">Shape</a></li>
         <li><a href="#mode-surface">Surface</a></li>
@@ -1151,6 +1401,17 @@ shadows.destroy();               // remove listeners and properties</code></pre>
         <li><a href="#mode-glass">Glass</a></li>
       </ul>
       <a class="subnav-top" href="#install">Get started</a>
+      <a class="subnav-top" href="#recipes">Recipes</a>
+      <ul>
+        <li><a href="#recipe-follow">Follow the pointer</a></li>
+        <li><a href="#recipe-lamp">A fixed lamp</a></li>
+        <li><a href="#recipe-card">A card</a></li>
+        <li><a href="#recipe-buttons">Buttons</a></li>
+        <li><a href="#recipe-photo">A photo card</a></li>
+        <li><a href="#recipe-dark">Dark mode</a></li>
+        <li><a href="#recipe-dialog">A dialog</a></li>
+        <li><a href="#recipe-react">React</a></li>
+      </ul>
       <a class="subnav-top" href="#reference">Reference</a>
       <ul>
         <li><a href="#ref-light">The light</a></li>
@@ -1168,7 +1429,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   </div>
 
 </main>
-<section class="tuner" id="tuner" aria-label="Lighting controls">
+<section class="tuner" id="tuner" aria-label="Lighting controls" data-cast-hold>
   <div class="tuner-head">
     <button type="button" id="lamp-toggle" aria-pressed="false">Hide dot</button>
     <button type="button" id="t-collapse" aria-expanded="false" aria-controls="t-body">Tune</button>
@@ -1248,7 +1509,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 <script type="module">
   import { castShadow } from './cast-shadow.js';
 
-  const shadows = castShadow();
+  const shadows = castShadow({ follow: 'pointer' });
   const root = document.documentElement;
 
   // Keep anchor jumps clear of the fixed bar at whatever height it wraps to.
@@ -1275,38 +1536,27 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   window.addEventListener('scroll', () => { if (!spyFrame) spyFrame = requestAnimationFrame(spy); }, { passive: true });
   spy();
 
-  function moveLight(x, y) {
-    root.style.setProperty('--cast-light-x', `${(x / window.innerWidth) * 100}%`);
-    root.style.setProperty('--cast-light-y', `${(y / window.innerHeight) * 100}%`);
-    shadows.refresh();
-  }
+  // The library makes the light follow a mouse or pen; the tuner carries
+  // data-cast-hold so a slider can be reached without dragging the light.
+  // Tune's "click to place the light" turns following off so the light
+  // holds still while you read. Clicks place it either way: while following
+  // that changes nothing, and on touch, with no pointer to follow, it's the
+  // only way to move it.
+  const placeInput = document.getElementById('t-place');
+  const syncFollow = () => shadows.follow(placeInput.checked ? false : 'pointer');
 
   document.addEventListener('click', (event) => {
     // Links and controls should do their own job, not move the light.
-    if (event.target.closest('a, button, input, select, label, pre, #tuner')) return;
-    moveLight(event.clientX, event.clientY);
+    if (event.target.closest('a, button, input, select, label, pre, summary, #tuner')) return;
+    shadows.setLight(
+      `${(event.clientX / window.innerWidth) * 100}%`,
+      `${(event.clientY / window.innerHeight) * 100}%`,
+    );
   });
 
-  // The light follows a mouse or pen anywhere on the page. Tune's "click to
-  // place the light" turns that off so the light holds still while you
-  // read. Clicks place it either way: while following that changes nothing,
-  // and on touch, with no pointer to follow, it's the only way to move it.
-  // Moving over the tuner doesn't drag the light, so a slider can be
-  // reached without moving it. With reduced motion on, nothing follows.
-  const placeInput = document.getElementById('t-place');
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let frame = 0, pointerX = 0, pointerY = 0;
-  document.addEventListener('pointermove', (event) => {
-    if (placeInput.checked || still.matches || event.pointerType === 'touch') return;
-    if (event.target.closest('#tuner')) return;
-    pointerX = event.clientX;
-    pointerY = event.clientY;
-    if (frame) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      moveLight(pointerX, pointerY);
-    });
-  });
+  // ---- Recipes: the dialog example -------------------------------------
+  const recipeDialog = document.getElementById('recipe-sheet');
+  document.getElementById('recipe-open').addEventListener('click', () => recipeDialog.showModal());
 
   // ---- Lamp dot --------------------------------------------------------
   //
@@ -1394,6 +1644,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   const stripInput = document.getElementById('t-strip');
 
   function applyTuning() {
+    syncFollow();
     const grain = grainInput.value, size = sizeInput.value, blend = blendInput.value;
     const vig = vigInput.value, pool = poolInput.value;
     const lz = lzInput.value, lsize = lsizeInput.value;

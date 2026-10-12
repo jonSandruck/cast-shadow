@@ -12,7 +12,9 @@ No dependencies. No build step. Two files.
 
 ## Install
 
-Copy `cast-shadow.css` and `cast-shadow.js` into your project, then:
+Download [cast-shadow.zip](https://github.com/jonSandruck/cast-shadow/releases/latest/download/cast-shadow.zip) and unzip it into your project. It
+holds the two files, `cast-shadow.css` and `cast-shadow.js`, from the latest
+release, plus the licence. Then:
 
 ```html
 <link rel="stylesheet" href="cast-shadow.css">
@@ -397,6 +399,10 @@ lights the object's own face:
 You get a face modelled from both ends — highlight toward the light,
 shading away from it — plus fine grain.
 
+Surface mode sets `position: relative` so its layers have something to
+anchor to. A modal `<dialog>` or an open popover keeps `position: fixed`
+instead, so it stays pinned to the viewport.
+
 **Tune by surface, not by theme.** Compositing leaves almost no headroom at
 the top of a light surface: white at alpha `0.14` over `#fcfbf9` moves the
 red channel from 252 to 252.4, under half a level. Black at the same alpha
@@ -409,12 +415,30 @@ without needing to know which theme is active.
 | --- | --- | --- |
 | `--cast-sheen` | `0.14` | Highlight strength on the lit edge |
 | `--cast-shade` | `0.09` | Shading strength on the unlit edge |
+| `--cast-lift` | `0.2` | How much brighter a face gets as it rises toward the light |
 | `--cast-sheen-reach` | from light size | Terminator width; `45%` at the default source |
 | `--cast-surface-z` | `-1` | Which layer the modelling sits on |
 | `--cast-grain` | `0.2` | Grain opacity |
 | `--cast-grain-size` | `280` | Grain tile size, in px |
 | `--cast-grain-z` | `-1` | Which layer the grain sits on |
 | `--cast-grain-image` | fractal noise | Set to `none` to drop it |
+
+### Higher faces catch more light
+
+A lamp's light falls off with the square of distance, so a face that floats
+nearer to it is brighter. Surface mode adds the light's colour by how much
+more light reaches the face than the page beneath it:
+
+```
+(d² + H²) / (d² + (H − h)²) − 1
+```
+
+With the light at 600 and 300px to one side, that is `0.06` for a card at
+20, `0.31` for a dialog at 96 and `0.80` at 200, capped at 1.
+`--cast-lift` scales it. Measured on a dark tile in the same spot, face
+L* rose by `1.0` at 20, `5.2` at 96 and `10.5` at 200. A near-white face
+has no room to brighten, so light themes barely change. Set
+`--cast-lift: 0` to turn it off.
 
 ### The light's height and size reach the face too
 
@@ -711,15 +735,39 @@ const shadows = castShadow({
   root: document,                 // subtree to watch
   light: { x: '20%', y: '10%' },  // overrides the CSS properties
   maxDistance: null,              // null = viewport diagonal
+  follow: false,                  // 'pointer' = the light follows the mouse
 });
 
 shadows.setLight('80%', '0%');  // move the light
+shadows.follow('pointer');      // start following; false stops
 shadows.refresh();              // re-measure after a layout change
 shadows.destroy();              // remove listeners and properties
 ```
 
 Calling `castShadow()` replaces the instance that started on import, so the
 two never fight over the same element.
+
+On a server, importing the module does nothing, so a server-rendered app
+(Next.js and the like) can import it at the top of a file and call
+`castShadow()` in an effect.
+
+`setLight()` writes `--cast-light-x` and `--cast-light-y` on the root as
+well, so room mode's pool moves with the shadows. A bare number means px.
+
+### Following the pointer
+
+```js
+castShadow({ follow: 'pointer' });
+```
+
+The light tracks a mouse or pen anywhere on the page, one update per frame.
+It stays put in three cases:
+
+- **Touch.** There's no hover, so it would only chase a finger that is
+  scrolling. Call `setLight()` from a tap if you want taps to move it.
+- **Reduced motion.** Nothing follows, and shadows fall back to static.
+- **Over `data-cast-hold`.** Put it on a menu or a panel of controls so the
+  pointer can reach them without dragging the light along.
 
 Note that `x` and `y` are JavaScript's business but `z` is not. Height lives
 in CSS with elevation, because they have to be in the same unit space for
@@ -749,13 +797,22 @@ Needs `@property`, `atan2()`, `IntersectionObserver` and `ResizeObserver` —
 Chrome and Edge 111+, Safari 16.4+, Firefox 128+. Older browsers ignore the
 custom properties and fall back to the static shadow.
 
+## Releasing
+
+Publish a release on GitHub with a version tag, such as `v1.1`. The
+`Release zip` workflow zips the two library files and the licence, and attaches
+`cast-shadow.zip` to it, and the download link always points at the newest
+release. To rebuild the zip for an existing tag, run the workflow by hand
+and give it the tag.
+
 ## Demo
 
 `index.html` opens with a hero for the library. Then it shows the light
 (position, height, size, colour, room light) and the objects it lights
 (elevation, shape, surface, edge, photos, glass), each with a live example,
-its code, and a closed "How it works" panel. It ends with Get started and
-the full reference. Serve the folder and open it, and the light
+its code, and a closed "How it works" panel. It ends with Get started,
+recipes to copy (pointer follow, a fixed lamp, a card, buttons, a photo
+card, dark mode, a dialog, React) and the full reference. Serve the folder and open it, and the light
 follows your pointer. Tune has a switch to place it with a click instead.
 
 The library is still the two files at the root. `demo/img/` holds
@@ -772,7 +829,6 @@ All but the window came from `scikit-image`'s bundled sample data:
 | `portrait.jpg` | NASA — astronaut Eileen Collins, public domain |
 | `deepfield.jpg` | NASA/ESA — Hubble Deep Field, public domain |
 | `coffee.jpg`, `cat.jpg` | scikit-image sample data |
-| `avatar.jpg` | Rocket launch, scikit-image sample data |
 | `window.jpg` | Patterned window glass, [Unsplash](https://unsplash.com/photos/a-blurry-image-of-a-diamond-pattern-on-a-window-GY2KahLf4fY), Unsplash License. Cropped to a 5:2 band and resized to 1000×400 |
 
 The lightbulb in the hero is the [Font Awesome Free](https://fontawesome.com)
@@ -786,3 +842,8 @@ License allows free use without attribution, though the credit above is
 good manners. The scikit-image samples are distributed for use with that
 project and I have not verified their terms for other uses. Swapping in your own photos is a one-line change per
 card.
+
+## License
+
+[MIT](LICENSE). The demo's photos and the Font Awesome icon keep their own
+licences, listed under the demo's image credits above.
