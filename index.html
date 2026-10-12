@@ -401,8 +401,11 @@
     <p>
       <code>--cast-light-x</code> and <code>--cast-light-y</code> place the
       light in the viewport. On this page it follows your pointer, and every
-      shadow, sheen and rim turns to face it.
+      shadow, sheen and rim turns to face it. That takes one option:
     </p>
+    <pre><code>import { castShadow } from './cast-shadow.js';
+
+castShadow({ <b>follow: 'pointer'</b> });</code></pre>
 
     <h3 id="light-height">Height</h3>
     <p>
@@ -1080,11 +1083,23 @@ const shadows = castShadow({
   root: document,                // subtree to watch
   light: { x: '20%', y: '10%' }, // overrides the CSS properties
   maxDistance: null,             // null = viewport diagonal
+  follow: false,                 // 'pointer' = the light follows the mouse
 });
 
 shadows.setLight('80%', '0%');   // move the light
+shadows.follow('pointer');       // start following; false stops
 shadows.refresh();               // re-measure after a layout change
 shadows.destroy();               // remove listeners and properties</code></pre>
+    <div class="note">
+      <strong>Following stays put on touch, under reduced motion, and over
+      <code>data-cast-hold</code>.</strong> A touch has no hover, so the
+      light would only chase a scrolling finger. Put
+      <code>data-cast-hold</code> on a menu or a panel of controls so the
+      pointer can reach it without dragging the light.
+      <code>setLight()</code> also writes <code>--cast-light-x</code> and
+      <code>--cast-light-y</code>, so room mode's pool moves with the
+      shadows.
+    </div>
     <div class="note">
       <code>x</code> and <code>y</code> are JavaScript's business but
       <code>z</code> is not. Height lives in CSS with elevation, because
@@ -1168,7 +1183,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   </div>
 
 </main>
-<section class="tuner" id="tuner" aria-label="Lighting controls">
+<section class="tuner" id="tuner" aria-label="Lighting controls" data-cast-hold>
   <div class="tuner-head">
     <button type="button" id="lamp-toggle" aria-pressed="false">Hide dot</button>
     <button type="button" id="t-collapse" aria-expanded="false" aria-controls="t-body">Tune</button>
@@ -1248,7 +1263,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
 <script type="module">
   import { castShadow } from './cast-shadow.js';
 
-  const shadows = castShadow();
+  const shadows = castShadow({ follow: 'pointer' });
   const root = document.documentElement;
 
   // Keep anchor jumps clear of the fixed bar at whatever height it wraps to.
@@ -1275,37 +1290,22 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   window.addEventListener('scroll', () => { if (!spyFrame) spyFrame = requestAnimationFrame(spy); }, { passive: true });
   spy();
 
-  function moveLight(x, y) {
-    root.style.setProperty('--cast-light-x', `${(x / window.innerWidth) * 100}%`);
-    root.style.setProperty('--cast-light-y', `${(y / window.innerHeight) * 100}%`);
-    shadows.refresh();
-  }
+  // The library makes the light follow a mouse or pen; the tuner carries
+  // data-cast-hold so a slider can be reached without dragging the light.
+  // Tune's "click to place the light" turns following off so the light
+  // holds still while you read. Clicks place it either way: while following
+  // that changes nothing, and on touch, with no pointer to follow, it's the
+  // only way to move it.
+  const placeInput = document.getElementById('t-place');
+  const syncFollow = () => shadows.follow(placeInput.checked ? false : 'pointer');
 
   document.addEventListener('click', (event) => {
     // Links and controls should do their own job, not move the light.
-    if (event.target.closest('a, button, input, select, label, pre, #tuner')) return;
-    moveLight(event.clientX, event.clientY);
-  });
-
-  // The light follows a mouse or pen anywhere on the page. Tune's "click to
-  // place the light" turns that off so the light holds still while you
-  // read. Clicks place it either way: while following that changes nothing,
-  // and on touch, with no pointer to follow, it's the only way to move it.
-  // Moving over the tuner doesn't drag the light, so a slider can be
-  // reached without moving it. With reduced motion on, nothing follows.
-  const placeInput = document.getElementById('t-place');
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let frame = 0, pointerX = 0, pointerY = 0;
-  document.addEventListener('pointermove', (event) => {
-    if (placeInput.checked || still.matches || event.pointerType === 'touch') return;
-    if (event.target.closest('#tuner')) return;
-    pointerX = event.clientX;
-    pointerY = event.clientY;
-    if (frame) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      moveLight(pointerX, pointerY);
-    });
+    if (event.target.closest('a, button, input, select, label, pre, summary, #tuner')) return;
+    shadows.setLight(
+      `${(event.clientX / window.innerWidth) * 100}%`,
+      `${(event.clientY / window.innerHeight) * 100}%`,
+    );
   });
 
   // ---- Lamp dot --------------------------------------------------------
@@ -1394,6 +1394,7 @@ shadows.destroy();               // remove listeners and properties</code></pre>
   const stripInput = document.getElementById('t-strip');
 
   function applyTuning() {
+    syncFollow();
     const grain = grainInput.value, size = sizeInput.value, blend = blendInput.value;
     const vig = vigInput.value, pool = poolInput.value;
     const lz = lzInput.value, lsize = lsizeInput.value;

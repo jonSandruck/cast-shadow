@@ -711,15 +711,35 @@ const shadows = castShadow({
   root: document,                 // subtree to watch
   light: { x: '20%', y: '10%' },  // overrides the CSS properties
   maxDistance: null,              // null = viewport diagonal
+  follow: false,                  // 'pointer' = the light follows the mouse
 });
 
 shadows.setLight('80%', '0%');  // move the light
+shadows.follow('pointer');      // start following; false stops
 shadows.refresh();              // re-measure after a layout change
 shadows.destroy();              // remove listeners and properties
 ```
 
 Calling `castShadow()` replaces the instance that started on import, so the
 two never fight over the same element.
+
+`setLight()` writes `--cast-light-x` and `--cast-light-y` on the root as
+well, so room mode's pool moves with the shadows. A bare number means px.
+
+### Following the pointer
+
+```js
+castShadow({ follow: 'pointer' });
+```
+
+The light tracks a mouse or pen anywhere on the page, one update per frame.
+It stays put in three cases:
+
+- **Touch.** There's no hover, so it would only chase a finger that is
+  scrolling. Call `setLight()` from a tap if you want taps to move it.
+- **Reduced motion.** Nothing follows, and shadows fall back to static.
+- **Over `data-cast-hold`.** Put it on a menu or a panel of controls so the
+  pointer can reach them without dragging the light along.
 
 Note that `x` and `y` are JavaScript's business but `z` is not. Height lives
 in CSS with elevation, because they have to be in the same unit space for

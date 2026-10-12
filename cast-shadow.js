@@ -19,7 +19,10 @@
  * exact cost this design exists to avoid.
  *
  * Importing this module starts it automatically with sensible defaults.
- * Call castShadow() only if you need to configure something.
+ * Call castShadow() only if you need to configure something, such as
+ * making the light follow the pointer:
+ *
+ *   castShadow({ follow: 'pointer' });
  */
 
 const DEFAULTS = {
@@ -31,11 +34,16 @@ const DEFAULTS = {
   light: null,
   /** Range over which --cast-t reaches 1. Null uses the viewport diagonal. */
   maxDistance: null,
+  /** 'pointer' moves the light with the mouse or pen. False leaves it put. */
+  follow: false,
 };
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 const PROPS = ['--cast-ux', '--cast-uy', '--cast-d'];
 const MAX_DISTANCE_PROP = '--cast-max-d';
+const LIGHT_PROPS = ['--cast-light-x', '--cast-light-y'];
+/** Over an element with this attribute, a following light holds still. */
+const HOLD_SELECTOR = '[data-cast-hold]';
 
 /**
  * Resolve a CSS-ish length against a viewport axis.
@@ -117,7 +125,14 @@ function createInstance(options = {}) {
 
   let frame = 0;
   let remeasure = true;
+  let relight = false;
   let stopped = false;
+
+  /** Pointer position waiting for the next frame, in viewport px. */
+  let pendingPointer = null;
+  let following = false;
+  /** Whether this instance has written the light's CSS properties. */
+  let wroteLight = false;
 
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
 
@@ -127,10 +142,7 @@ function createInstance(options = {}) {
   // size, never on scroll. Positions are cached in document space so the
   // update pass can derive screen position from a single scroll read.
 
-  function measure() {
-    const scrollLeft = window.scrollX;
-    const scrollTop = window.scrollY;
-
+  function readLight() {
     // An unset custom property computes to an empty string, not undefined,
     // so fall through on falsiness rather than nullishness.
     const declaredX = config.light?.x ?? readRootProperty('--cast-light-x');
@@ -138,6 +150,13 @@ function createInstance(options = {}) {
 
     light.x = toPixels(declaredX || '50%', window.innerWidth);
     light.y = toPixels(declaredY || '0%', window.innerHeight);
+  }
+
+  function measure() {
+    const scrollLeft = window.scrollX;
+    const scrollTop = window.scrollY;
+
+    readLight();
 
     const declaredMax = config.maxDistance ?? readRootProperty('--cast-max-distance');
     const resolvedMax = toPixels(declaredMax, window.innerWidth);
@@ -215,19 +234,72 @@ function createInstance(options = {}) {
     }
   }
 
-  function schedule({ measureFirst = false } = {}) {
+  function schedule({ measureFirst = false, lightFirst = false } = {}) {
     if (stopped || reducedMotion.matches) return;
     if (measureFirst) remeasure = true;
+    if (lightFirst) relight = true;
     if (frame) return;
 
     frame = requestAnimationFrame(() => {
       frame = 0;
+      if (pendingPointer) {
+        const { x, y } = pendingPointer;
+        pendingPointer = null;
+        placeLight(
+          `${round((x / window.innerWidth) * 100)}%`,
+          `${round((y / window.innerHeight) * 100)}%`,
+        );
+      }
       if (remeasure) {
         remeasure = false;
+        relight = false;
         measure();
+      } else if (relight) {
+        // Moving the light moves no element, so their cached boxes stand.
+        relight = false;
+        readLight();
       }
       update();
     });
+  }
+
+  // ---- The light -------------------------------------------------------
+  //
+  // The stylesheet reads the light's position too: room mode centres its
+  // pool on it. So a move is written to the root's CSS properties as well
+  // as kept here, and the two never disagree.
+
+  function placeLight(x, y) {
+    if (stopped) return;
+    config.light = { x, y };
+    // A bare number means px here, but CSS would reject it as a position.
+    const style = document.documentElement.style;
+    style.setProperty('--cast-light-x', typeof x === 'number' ? `${x}px` : String(x));
+    style.setProperty('--cast-light-y', typeof y === 'number' ? `${y}px` : String(y));
+    wroteLight = true;
+  }
+
+  // A touch has no hover, so the light would only chase a finger that is
+  // scrolling the page. With reduced motion on, nothing moves at all.
+  // Positions land in the next frame, so a fast mouse costs one update per
+  // frame, not one per event.
+  function onPointerMove(event) {
+    if (event.pointerType === 'touch' || reducedMotion.matches) return;
+    if (event.target instanceof Element && event.target.closest(HOLD_SELECTOR)) return;
+    pendingPointer = { x: event.clientX, y: event.clientY };
+    schedule({ lightFirst: true });
+  }
+
+  function setFollow(mode) {
+    const next = mode === 'pointer';
+    if (next === following || stopped) return;
+    following = next;
+    if (following) {
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+    } else {
+      window.removeEventListener('pointermove', onPointerMove);
+      pendingPointer = null;
+    }
   }
 
   // ---- Observers -------------------------------------------------------
@@ -319,6 +391,7 @@ function createInstance(options = {}) {
       subtree: true,
     });
     reducedMotion.addEventListener('change', onMotionPreferenceChange);
+    setFollow(config.follow);
 
     // Paint the first frame synchronously so shadows are correct on load
     // rather than snapping into place a frame later.
@@ -334,6 +407,7 @@ function createInstance(options = {}) {
     stopped = true;
 
     if (frame) cancelAnimationFrame(frame);
+    window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onResize);
     reducedMotion.removeEventListener('change', onMotionPreferenceChange);
@@ -343,6 +417,9 @@ function createInstance(options = {}) {
 
     for (const element of entries.keys()) clearProperties(element);
     document.documentElement.style.removeProperty(MAX_DISTANCE_PROP);
+    if (wroteLight) {
+      for (const property of LIGHT_PROPS) document.documentElement.style.removeProperty(property);
+    }
     entries.clear();
     visible.clear();
   }
@@ -353,11 +430,17 @@ function createInstance(options = {}) {
     /** Re-measure everything. Call after a layout change the observers miss. */
     refresh: () => schedule({ measureFirst: true }),
 
-    /** Move the light. Accepts the same units as the CSS properties. */
+    /**
+     * Move the light. Accepts the same units as the CSS properties, and
+     * writes them, so room mode's pool moves with the shadows.
+     */
     setLight(x, y) {
-      config.light = { x, y };
-      schedule({ measureFirst: true });
+      placeLight(x, y);
+      schedule({ lightFirst: true });
     },
+
+    /** Start or stop following: 'pointer', or false to hold still. */
+    follow: setFollow,
 
     /** Tear down listeners and remove every property this instance wrote. */
     destroy,
